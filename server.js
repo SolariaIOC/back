@@ -31,7 +31,7 @@ app.get('/app', async (req, res) => {
             console.log("Error");
             return;
         } else {
-            res.send(results.data);
+            res.send(results);
         }
     });
 })
