@@ -24,6 +24,7 @@ db.connect(err => {
     console.log("Connected to DB");
 });
 
+
 app.get('/app', async (req, res) => {
     db.query('SELECT * FROM usuaris', (err, results) => {
         if (err) {
@@ -73,6 +74,7 @@ app.post('/app/registre', async (req, res) => {
                     return;
                 }
             });
+            res.status(200).send("Usuario creado con exito");
         } else {
             res.status(400).send('El usuario ya existe');
         }
