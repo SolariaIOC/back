@@ -1,24 +1,14 @@
 const express = require("express");
-const mysql = require("mysql2");
 const cors = require("cors");
-const dotenv = require("dotenv");
 const bcrypt = require('bcrypt');
 const login = require("./login.js")
-const jwt = require("jsonwebtoken");
+const db = require('./database');
 
-dotenv.config();
+
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use('/login', login)
-
-const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-})
+app.use('/', login)
 
 db.connect(err => {
     if (err) {
@@ -64,22 +54,22 @@ app.get('/app/:id', async (req, res) => {
 
 
 app.post('/app/registre', async (req, res) => {
-    const { DNI, Nom, Cognoms, Contrasenya, TipusUsuari } = req.body;
+    const { Email, Nom, Cognoms, Contrasenya, TipusUsuari } = req.body;
     bcrypt.hash(Contrasenya, 10, (err, hashedPassword) => {
         if (err) {
             console.log("Error hashing password:", err);
             return res.status(500).send({ error: 'Error hashing password' });
         }
 
-        const queryComprobar = 'SELECT id_usuari FROM usuaris WHERE DNI = ?';
-        db.query(queryComprobar, [DNI], (error, results) => {
+        const queryComprobar = 'SELECT id_usuari FROM usuaris WHERE Email = ?';
+        db.query(queryComprobar, [Email], (error, results) => {
             if (error) {
                 res.status(500).send({ error: 'Error encontrando usuario' });
                 return;
             }
             if (results.length === 0) {
-                const queryInsertarUsuario = 'INSERT INTO usuaris (DNI, Nom, Cognoms, Contrasenya, TipusUsuari) VALUES (?, ?, ?, ?, ?)';
-                db.query(queryInsertarUsuario, [DNI, Nom, Cognoms, hashedPassword, TipusUsuari], (err, result) => {
+                const queryInsertarUsuario = 'INSERT INTO usuaris (Email, Nom, Cognoms, Contrasenya, TipusUsuari) VALUES (?, ?, ?, ?, ?)';
+                db.query(queryInsertarUsuario, [Email, Nom, Cognoms, hashedPassword, TipusUsuari], (err, result) => {
                     if (err) {
                         console.log("Error creando la tabla");
                         res.status(500).send({ error: 'Error creando la tabla' });
@@ -93,27 +83,6 @@ app.post('/app/registre', async (req, res) => {
         });
     });
 });
-
-app.post('/login', async (req, res) => {
-    const { DNI, Contrasenya } = req.body;
-    db.query('SELECT * FROM usuaris WHERE DNI = ?', [DNI], async (error, results) => {
-        if (error) {
-            console.log("Error:", error);
-            return res.status(500).json({ error: 'Error en el servidor' });
-        }
-        if (results.length === 0) {
-            return res.status(400).json({ error: 'Credenciales incorrectas' });
-        }
-        const usuario = results[0];
-        const contrasenyaValida = await bcrypt.compare(Contrasenya, usuario.Contrasenya);
-        if (!contrasenyaValida) {
-            return res.status(400).json({ error: 'Credenciales incorrectas' });
-        }
-        const token = jwt.sign({ id: usuario.id_usuari }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token });
-    });
-});
-
 
 
 const PORT = process.env.PORT || 3333;
