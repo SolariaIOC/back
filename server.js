@@ -1,20 +1,14 @@
 const express = require("express");
-const mysql = require("mysql2");
 const cors = require("cors");
-const dotenv = require("dotenv");
+const bcrypt = require('bcrypt');
+const login = require("./login.js")
+const db = require('./database');
 
-dotenv.config();
+
 const app = express();
 app.use(cors());
 app.use(express.json());
-
-const db = mysql.createConnection({
-    host: process.env.DB_HOST,
-    port: process.env.DB_PORT,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-})
+app.use('/', login)
 
 db.connect(err => {
     if (err) {
@@ -57,27 +51,36 @@ app.get('/app/:id', async (req, res) => {
     }
 });
 
+
+
 app.post('/app/registre', async (req, res) => {
-    const { DNI, Nom, Cognoms, Contrasenya, TipusUsuari } = req.body;
-    const queryComprobar = 'SELECT id_usuari FROM usuaris WHERE DNI = ?';
-    db.query(queryComprobar, [DNI], (error, results) => {
-        if (error) {
-            res.status(500).send({ error: 'Error encontrando usuario' });
-            return;
+    const { Email, Nom, Cognoms, Contrasenya, TipusUsuari } = req.body;
+    bcrypt.hash(Contrasenya, 10, (err, hashedPassword) => {
+        if (err) {
+            console.log("Error hashing password:", err);
+            return res.status(500).send({ error: 'Error hashing password' });
         }
-        if (results.length === 0) {
-            const queryInsertarUsuario = 'INSERT INTO usuaris (DNI, Nom, Cognoms, Contrasenya, TipusUsuari) VALUES (?, ?, ?, ?, ?)';
-            db.query(queryInsertarUsuario, [DNI, Nom, Cognoms, Contrasenya, TipusUsuari], (err, result) => {
-                if (err) {
-                    console.log("Error creando la tabla");
-                    res.status(500).send({ error: 'Error creando la tabla' });
-                    return;
-                }
-            });
-            res.status(200).send("Usuario creado con exito");
-        } else {
-            res.status(400).send('El usuario ya existe');
-        }
+
+        const queryComprobar = 'SELECT id_usuari FROM usuaris WHERE Email = ?';
+        db.query(queryComprobar, [Email], (error, results) => {
+            if (error) {
+                res.status(500).send({ error: 'Error encontrando usuario' });
+                return;
+            }
+            if (results.length === 0) {
+                const queryInsertarUsuario = 'INSERT INTO usuaris (Email, Nom, Cognoms, Contrasenya, TipusUsuari) VALUES (?, ?, ?, ?, ?)';
+                db.query(queryInsertarUsuario, [Email, Nom, Cognoms, hashedPassword, TipusUsuari], (err, result) => {
+                    if (err) {
+                        console.log("Error creando la tabla");
+                        res.status(500).send({ error: 'Error creando la tabla' });
+                        return;
+                    }
+                    res.status(200).send("Usuario creado con éxito");
+                });
+            } else {
+                res.status(400).send('El usuario ya existe');
+            }
+        });
     });
 });
 
