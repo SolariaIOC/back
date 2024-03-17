@@ -21,7 +21,7 @@ login.post('/login', async (req, res) => {
         if (!contrasenyaValida) {
             return res.status(400).json({ error: 'Credenciales incorrectas' });
         }
-        const token = jwt.sign({ id: usuario.id_usuari, tipus: usuario.TipusUsuari }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ usuario }, process.env.JWT_SECRET, { expiresIn: '1h' });
         res.json({ token });
     });
 });
