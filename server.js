@@ -10,20 +10,14 @@ app.use(cors());
 app.use(express.json());
 app.use('/', login)
 
-db.connect(err => {
-    if (err) {
-        console.log("Error connecting to DB", err);
-        return;
-    }
-    console.log("Connected to DB");
-});
+
 
 
 app.get('/app', async (req, res) => {
     db.query('SELECT * FROM usuaris', (err, results) => {
         if (err) {
             console.log("Error");
-            return;
+            return res.status(500).send("Error")
         } else {
             res.send(results);
         }
@@ -36,18 +30,18 @@ app.get('/app/:id', async (req, res) => {
         db.query('SELECT * FROM usuaris where id_usuari = ?', id, (error, results) => {
             if (error) {
                 console.log("Error:", error);
-                return res.status(500).json("Server Error");
+                return res.status(500).send("Server Error");
             } else {
                 if (results.length > 0) {
                     res.send(results[0]);
                 } else {
-                    res.status(404).json("Not found");
+                    res.status(404).send("Not found");
                 }
             }
         });
     } catch (err) {
         console.log("Catch block error:", err);
-        res.status(500).json("Server Error");
+        res.status(500).send("Server Error");
     }
 });
 
@@ -85,10 +79,15 @@ app.post('/app/registre', async (req, res) => {
 });
 
 
-const PORT = process.env.PORT || 3333;
-app.listen(PORT, () => {
-    console.log(`Server is running at PORT: ${PORT}`);
-});
+if (require.main === module) {
+    const PORT = process.env.PORT || 3333;
+    app.listen(PORT, () => {
+        console.log(`Server is running at PORT: ${PORT}`);
+    });
+  }
+
+module.exports = app;
+
 
 
 
