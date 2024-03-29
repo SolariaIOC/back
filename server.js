@@ -3,13 +3,14 @@ const cors = require("cors");
 const bcrypt = require('bcrypt');
 const login = require("./login.js")
 const db = require('./database');
+const immobles = require("./immobles.js")
 
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use('/', login)
-
+app.use('/', immobles);
 
 
 
