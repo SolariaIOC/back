@@ -1,7 +1,7 @@
 const request = require('supertest');
-const app = require("./server")
+const app = require("./server.js")
 const login = require('./login.js');
-const db = require('./database');
+const db = require('./database.js');
 
 jest.mock('./database', () => {
     return {
