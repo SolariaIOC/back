@@ -3,13 +3,17 @@ const cors = require("cors");
 const login = require("./login.js")
 const immobles = require("./immobles.js");
 const usuaris = require("./usuaris.js");
+const cookieParser = require('cookie-parser');
+
 
 
 const app = express();
 app.use(cors());
+app.use(cookieParser());
 app.use('/', login);
 app.use('/', immobles);
 app.use('/', usuaris);
+
 
 if (require.main === module) {
     const PORT = process.env.PORT || 3333;

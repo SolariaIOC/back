@@ -22,7 +22,11 @@ login.post('/login', async (req, res) => {
             return res.status(400).json({ error: 'Credenciales incorrectas' });
         }
         const token = jwt.sign({ usuario }, process.env.JWT_SECRET, { expiresIn: '1h' });
-        res.json({ token });
+        const refreshToken = jwt.sign({ usuario }, process.env.JWT_SECRET, { expiresIn: '1d' });
+        res
+            .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' })
+            .cookie('token', token, { httpOnly: true, sameSite: 'strict' })
+            .send("Inicio de sesión exitoso");
     });
 });
 module.exports = login;
