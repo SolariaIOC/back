@@ -1,3 +1,8 @@
+//Treballem amb 3 tipus d'usuari
+// anónim = (accesible per tothom)
+// Registrat = (R) nomes pot accedir a les seves dades
+// Administrador = (A) pot accedir a tots els usuaris i immobles
+
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -75,7 +80,7 @@ immobles.get('/immobles/poblacio/:poblacio', async (req, res) => {
 });
 
 // Endpoint per obtenir la llista d'immobles segons l'ID de l'usuari del token  (R)
-immobles.get('/immobles/usuari', verificaToken, async (req, res) => {
+immobles.get('/immobles/r', verificaToken, async (req, res) => {
     try {
         const idUsuariToken = req.idUsuariToken;
 
@@ -97,7 +102,7 @@ immobles.get('/immobles/usuari', verificaToken, async (req, res) => {
 
 
 // Endpoint per afegir un nou immoble (R)
-immobles.post('/immobles/afegir', verificaToken, async (req, res) => {
+immobles.post('/immobles/r/afegir', verificaToken, async (req, res) => {
     try {
         // Recollim dades de l'immoble del body, excepte id_usuari que l'agafa del token
         let { Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
@@ -129,7 +134,7 @@ immobles.post('/immobles/afegir', verificaToken, async (req, res) => {
 });
 
 // Endpoint per eliminar un immoble per la seva id_immoble (R)
-immobles.delete('/immobles/r/:id_immoble', verificaToken, async (req, res) => {
+immobles.delete('/immobles/r/eliminar/:id_immoble', verificaToken, async (req, res) => {
     
     // Recollim el id_usuari del token i la id_immoble de la URL
     const { idUsuariToken, TipusUsuariToken } = req;
@@ -176,6 +181,96 @@ immobles.delete('/immobles/r/:id_immoble', verificaToken, async (req, res) => {
 } catch (error) {
     res.status(error.status || 500).json({ error: error.message });
 }
+});
+
+// Endpoint per a la llista de tots els usuaris (A)
+immobles.get('/immobles/a/llistaUsuaris', verificaToken, async (req, res) => {
+    try {
+        db.query('SELECT * FROM usuaris', (error, results) => {
+            if (error) {
+                console.error("Error:", error);
+                return res.status(500).json({ error: 'Error en el servidor' });
+            }
+            if (!results || results.length === 0) {
+                return res.status(404).json({ error: 'No s\'ha trobat cap usuari' });
+            }
+            res.json(results);
+        });
+    } catch (error) {
+        console.error("Error en el bloc catch:", error);
+        res.status(500).json("Error del servidor");
+    }
+});
+
+
+// Endpoint per a la llista d'usuaris per Email usuari (A)
+immobles.get('/immobles/a/llistaUsuaris/:Email', verificaToken, async (req, res) => {
+    try {
+        const Email = req.params.Email;
+
+        db.query('SELECT * FROM usuaris WHERE Email = ?', [Email], (error, results) => {
+            if (error) {
+                console.error("Error:", error);
+                return res.status(500).json({ error: 'Error en el servidor' });
+            }
+            if (!results || results.length === 0) {
+                return res.status(404).json({ error: 'No s\'ha trobat cap usuari' });
+            }
+            res.json(results);
+        });
+    } catch (error) {
+        console.error("Error en el bloc catch:", error);
+        res.status(500).json("Error del servidor");
+    }
+});
+
+// Endpoint per a la llista d'immobles per Email usuari (A)
+immobles.get('/immobles/a/llistaImmobles/:Email', verificaToken, (req, res) => {
+    const Email = req.params.Email;
+
+    // Consulta per obtenir els immobles associats a l'usuari amb l'email proporcionat
+    const query = `
+        SELECT i.*
+        FROM immobles i
+        INNER JOIN usuaris u ON i.id_usuari = u.id_usuari
+        WHERE u.Email = ?
+    `;
+
+    db.query(query, [Email], (error, results) => {
+        if (error) {
+            console.error("Error:", error);
+            return res.status(500).json({ error: 'Error en el servidor' });
+        }
+        if (!results || results.length === 0) {
+            return res.status(404).json({ error: 'No s\'han trobat immobles per a aquest usuari' });
+        }
+
+        res.json(results);
+    });
+});
+
+// Endpoint per afegir un usuari (A)
+immobles.post('/immobles/a/afegirUsuari', verificaToken, (req, res) => {
+    // Aquí afegeix la lògica per afegir un usuari
+    res.send('Endpoint per afegir un usuari (POST)');
+});
+
+// Endpoint per afegir un immoble a un usuari (A)
+immobles.post('/immobles/a/afegirUsuariImmoble', verificaToken, (req, res) => {
+    // Aquí afegeix la lògica per afegir un immoble a un usuari
+    res.send('Endpoint per afegir un immoble a un usuari (POST)');
+});
+
+// Endpoint per eliminar un usuari (A)
+immobles.delete('/immobles/a/eliminarUsuari', verificaToken, (req, res) => {
+    // Aquí afegeix la lògica per eliminar un usuari
+    res.send('Endpoint per eliminar un usuari (DELETE)');
+});
+
+// Endpoint per eliminar un immoble (A)
+immobles.delete('/immobles/a/eliminarImmoble', verificaToken, (req, res) => {
+    // Aquí afegeix la lògica per eliminar un immoble
+    res.send('Endpoint per eliminar un immoble (DELETE)');
 });
 
 // Funció per netejar les cadenes de text en cas de trobar caràcters especials i espais en blanc al principi
