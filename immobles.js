@@ -118,6 +118,55 @@ immobles.post('/immobles/afegir', verificaToken, async (req, res) => {
     }
 });
 
+// Endpoint per eliminar un immoble per la seva id_immoble (R)
+immobles.delete('/immobles/r/:id_immoble', verificaToken, async (req, res) => {
+    
+    // Recollim el id_usuari del token i la id_immoble de la URL
+    const { idUsuariToken, TipusUsuariToken } = req;
+    const id_immoble_param = parseInt(req.params.id_immoble); // Diferenciem el paràmetre id_immoble
+
+    // Verifiquem si el tipus d'usuari és "R"
+    if (TipusUsuariToken !== "R") {
+        return res.status(403).json({ error: 'Usuari no registrat' });
+    }
+
+    // Verifiquem si la id_immoble és un número vàlid
+    if (isNaN(id_immoble_param) || id_immoble_param <= 0) {
+        return res.status(400).json({ error: 'La ID de l\'immoble no és vàlida' });
+    }
+
+    try {
+    // Comprovem si l'immoble pertany a l'usuari autenticat
+    const immoble = await new Promise((resolve, reject) => {
+        db.query('SELECT * FROM immobles WHERE id_immoble = ? AND id_usuari = ?', [id_immoble_param, idUsuariToken], (err, result) => {
+            if (err) {
+                console.error("Error en la consulta SELECT:", err);
+                reject({ status: 500, message: 'Error del servidor' });
+            } else if (!result || result.length === 0) {
+                reject({ status: 404, message: 'No s\'ha trobat cap immoble amb aquesta ID per a aquest usuari' });
+            } else {
+                resolve(result);
+            }
+        });
+    });
+
+    // Eliminem l'immoble de la base de dades
+    await new Promise((resolve, reject) => {
+        db.query('DELETE FROM immobles WHERE id_immoble = ?', [id_immoble_param], (err) => {
+            if (err) {
+                console.error("Error en la consulta DELETE:", err);
+                reject({ status: 500, message: 'Error del servidor' });
+            } else {
+                resolve();
+            }
+        });
+    });
+
+    res.status(200).json({ message: 'Immoble eliminat amb èxit' });
+} catch (error) {
+    res.status(error.status || 500).json({ error: error.message });
+}
+});
 
 
 module.exports = immobles;
