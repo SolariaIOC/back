@@ -99,9 +99,19 @@ immobles.get('/immobles/usuari', verificaToken, async (req, res) => {
 // Endpoint per afegir un nou immoble (R)
 immobles.post('/immobles/afegir', verificaToken, async (req, res) => {
     try {
-        //Recollim dades de l'immoble del body, excepte id_usuari que l'agafa del token
-        const { Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+        // Recollim dades de l'immoble del body, excepte id_usuari que l'agafa del token
+        let { Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
         const id_usuari = req.idUsuariToken;
+
+        // Netejem les dades rebudes abans de fer la consulta
+        Carrer = netejaDada(Carrer);
+        Numero = netejaDada(Numero);
+        Pis = netejaDada(Pis);
+        Codi_Postal = netejaDada(Codi_Postal);
+        Poblacio = netejaDada(Poblacio);
+        Descripcio = netejaDada(Descripcio);
+        Preu = netejaDada(Preu);
+        Imatge = netejaDada(Imatge);
 
         // Consulta SQL per afegir un nou immoble a la bbdd amb l'id de l'usuari autenticat
         db.query('INSERT INTO immobles (id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge], (err, result) => {
@@ -167,6 +177,20 @@ immobles.delete('/immobles/r/:id_immoble', verificaToken, async (req, res) => {
     res.status(error.status || 500).json({ error: error.message });
 }
 });
+
+// Funció per netejar les cadenes de text en cas de trobar caràcters especials i espais en blanc al principi
+function netejaDada(dada) {
+    if (typeof dada === 'string') {
+        dada = dada.trim();
+        dada = dada.replace(/\\+/g, '\\');
+        dada = dada.replace(/&/g, '&amp;')
+                   .replace(/</g, '&lt;')
+                   .replace(/>/g, '&gt;')
+                   .replace(/"/g, '&quot;')
+                   .replace(/'/g, '&#39;');
+    }
+    return dada;
+}
 
 
 module.exports = immobles;
