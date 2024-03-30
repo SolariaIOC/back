@@ -25,8 +25,8 @@ function verificaToken(req, res, next) {
             }
             req.usuario = usuario;
             res
-                .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' })
-                .cookie('token', accessToken, { httpOnly: true, sameSite: 'strict' });
+            .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict', maxAge: 60 * 1000 }) // 60 segons
+            .cookie('token', accessToken, { httpOnly: true, sameSite: 'strict', maxAge: 60 * 1000 }); // 60 segons
             next();
         } catch (error) {
             return res.status(400);
