@@ -1,3 +1,8 @@
+//Treballem amb 3 tipus d'usuari
+// anónim = (accesible per tothom)
+// Registrat = (R) nomes pot accedir a les seves dades
+// Administrador = (A) pot accedir a tots els usuaris i immobles
+
 const jwt = require("jsonwebtoken");
 const { refrescarToken } = require('./tokenUtils.js')
 
@@ -7,24 +12,21 @@ function verificaToken(req, res, next) {
     const authorizationHeader = req.cookies['token'];
     const refreshToken = req.cookies['refreshToken'];
 
-    if (!authorizationHeader && !refreshToken) {
-        return res.status(401).json({ error: 'Token no proporcionat' });
-    }
     try {
-        
-        // Verifica que s'ha proporcionat el token correctament
-        if (!token) {
-            throw new Error('Token invàlid');
+        if (!authorizationHeader && !refreshToken) {
+            return res.status(401).json({ error: 'Token no proporcionat' });
         }
 
-        //Guarda id_usuari i TipusUsuari del token descodificat
+        // Verifica que s'ha proporcionat el token correctament
         const decodedToken = jwt.verify(authorizationHeader, process.env.JWT_SECRET);
-        req.idUsuariToken = decodedToken.usuario.id_usuari;
-        req.TipusUsuariToken = decodedToken.usuario.TipusUsuari;
+        req.usuario = {
+            id_usuari: decodedToken.usuario.id_usuari,
+            TipusUsuari: decodedToken.usuario.TipusUsuari
+        };
 
         // Redirigeix l'usuari al seu endpoint corresponent si no s'està intentant accedir ja a l'endpoint adequat
         if (req.method !== 'DELETE') {
-            switch (req.TipusUsuariToken) {
+            switch (req.usuario.TipusUsuari) {
                 case 'R':
                     switch (req.method) {
                         case 'GET':
@@ -60,17 +62,18 @@ function verificaToken(req, res, next) {
                             }
                             break;
                         case 'POST':
-                            if (req.path === '/immobles/a/afegirUsuari') {
-                                return res.redirect('/immobles/a/afegirUsuari');
+                            console.log("METODE dins CASE POST ", req.method);
+                            if (req.path === '/usuaris/app/registre') {
+                                return res.redirect('/usuaris/app/registre');
                             } else if (req.path === '/immobles/a/afegirUsuariImmoble') {
                                 return res.redirect('/immobles/a/afegirImmoble');
                             }
                             break;
                         case 'DELETE':
-                            if (req.path === '/immobles/a/eliminarUsuari') {
-                                return res.redirect('/immobles/a/eliminarUsuari');
-                            } else if (req.path === '/immobles/a/eliminarImmoble') {
-                                return res.redirect('/immobles/a/eliminarImmoble');
+                            if (req.path === '/usuaris/app/a/eliminarUsuari/:id_usuari') {
+                                return res.redirect('/usuaris/app/a/eliminarUsuari/:id_usuari');
+                            } else if (req.path === '/immobles/a/eliminarImmoble/:id_immoble/:id_usuari') {
+                                return res.redirect('/immobles/a/eliminarImmoble/:id_immoble/:id_usuari');
                             }
                             break;
                     }
@@ -88,15 +91,16 @@ function verificaToken(req, res, next) {
         if (!refreshToken) {
             return res.status(401).send('No hay token de refresco');
         }
+
         try {
             const { accessToken, usuario, error: refreshError } = refrescarToken(refreshToken);
             if (refreshError) {
-                res.status(302).json({ redirectTo: "http://solaria.website" }) //Debe redirigir a la pagina de login para conseguir dos nuevos token
+                res.status(302).json({ redirectTo: "http://solaria.website" }) // Redirigir a la pàgina de login per obtenir dos nous tokens
             }
             req.usuario = usuario;
             res
-            .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict', maxAge: 60 * 1000 }) // 60 segons
-            .cookie('token', accessToken, { httpOnly: true, sameSite: 'strict', maxAge: 60 * 1000 }); // 60 segons
+                .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict', maxAge: 60 * 1000 }) // 60 segons
+                .cookie('token', accessToken, { httpOnly: true, sameSite: 'strict', maxAge: 60 * 1000 }); // 60 segons
             next();
         } catch (error) {
             return res.status(400);
@@ -105,3 +109,4 @@ function verificaToken(req, res, next) {
 }
 
 module.exports = verificaToken;
+

@@ -7,7 +7,6 @@ const express = require("express");
 const db = require('./database');
 const verificaToken = require('./auth');
 
-
 const immobles = express();
 immobles.use(express.json());
 
@@ -102,9 +101,20 @@ immobles.get('/immobles/r', verificaToken, async (req, res) => {
 // Endpoint per afegir un nou immoble (R)
 immobles.post('/immobles/r/afegir', verificaToken, async (req, res) => {
     try {
-        //Recollim dades de l'immoble del body, excepte id_usuari que l'agafa del token
-        const { Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
-        const id_usuari = req.idUsuariToken;
+        // Recollim dades de l'immoble del body, excepte id_usuari que l'agafa del token
+        let { Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+        const id_usuari = req.usuario.id_usuari;
+
+        // Netejem les dades rebudes abans de fer la consulta
+        Carrer = netejaDada(Carrer);
+        Numero = netejaDada(Numero);
+        Pis = netejaDada(Pis);
+        Codi_Postal = netejaDada(Codi_Postal);
+        Poblacio = netejaDada(Poblacio);
+        Descripcio = netejaDada(Descripcio);
+        Preu = netejaDada(Preu);
+        Imatge = netejaDada(Imatge);
+
 
         // Consulta SQL per afegir un nou immoble a la bbdd amb l'id de l'usuari autenticat
         db.query('INSERT INTO immobles (id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge], (err, result) => {
@@ -121,15 +131,18 @@ immobles.post('/immobles/r/afegir', verificaToken, async (req, res) => {
     }
 });
 
+
+
+
 // Endpoint per eliminar un immoble per la seva id_immoble (R)
 immobles.delete('/immobles/r/eliminar/:id_immoble', verificaToken, async (req, res) => {
     
     // Recollim el id_usuari del token i la id_immoble de la URL
-    const { idUsuariToken, TipusUsuariToken } = req;
+    const { id_usuari, TipusUsuari } = req.usuario;
     const id_immoble_param = parseInt(req.params.id_immoble); // Diferenciem el paràmetre id_immoble
 
     // Verifiquem si el tipus d'usuari és "R"
-    if (TipusUsuariToken !== "R") {
+    if (TipusUsuari !== "R") {
         return res.status(403).json({ error: 'Usuari no registrat' });
     }
 
@@ -141,7 +154,7 @@ immobles.delete('/immobles/r/eliminar/:id_immoble', verificaToken, async (req, r
     try {
     // Comprovem si l'immoble pertany a l'usuari autenticat
     const immoble = await new Promise((resolve, reject) => {
-        db.query('SELECT * FROM immobles WHERE id_immoble = ? AND id_usuari = ?', [id_immoble_param, idUsuariToken], (err, result) => {
+        db.query('SELECT * FROM immobles WHERE id_immoble = ? AND id_usuari = ?', [id_immoble_param, id_usuari], (err, result) => {
             if (err) {
                 console.error("Error en la consulta SELECT:", err);
                 reject({ status: 500, message: 'Error del servidor' });
@@ -238,27 +251,120 @@ immobles.get('/immobles/a/llistaImmobles/:Email', verificaToken, (req, res) => {
 });
 
 // Endpoint per afegir un usuari (A)
-immobles.post('/immobles/a/afegirUsuari', verificaToken, (req, res) => {
-    // Aquí afegeix la lògica per afegir un usuari
-    res.send('Endpoint per afegir un usuari (POST)');
-});
+// Vinculat directament a usuaris/app/registre desde auth.js
+
 
 // Endpoint per afegir un immoble a un usuari (A)
-immobles.post('/immobles/a/afegirUsuariImmoble', verificaToken, (req, res) => {
-    // Aquí afegeix la lògica per afegir un immoble a un usuari
-    res.send('Endpoint per afegir un immoble a un usuari (POST)');
+immobles.post('/immobles/a/afegirUsuariImmoble/:id_usuari', verificaToken, async (req, res) => {
+    // Verificar que l'usuari que fa la sol·licitud sigui de tipus "A"
+    if (req.usuario.TipusUsuari !== 'A') {
+        return res.status(403).json({ error: 'Acceso prohibido' });
+    }
+
+    // Recollir el ID de l'usuari de la URL
+    const id_usuari = parseInt(req.params.id_usuari);
+
+    try {
+        // Recollim dades de l'immoble del body
+        let { Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+
+        // Netejem les dades rebudes abans de fer la consulta
+        Carrer = netejaDada(Carrer);
+        Numero = netejaDada(Numero);
+        Pis = netejaDada(Pis);
+        Codi_Postal = netejaDada(Codi_Postal);
+        Poblacio = netejaDada(Poblacio);
+        Descripcio = netejaDada(Descripcio);
+        Preu = netejaDada(Preu);
+        Imatge = netejaDada(Imatge);
+
+        // Consulta SQL per afegir un nou immoble a la bbdd amb l'id de l'usuari rebut per URL
+        db.query('INSERT INTO immobles (id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge], (err, result) => {
+            if (err) {
+                console.error("Error en la inserció d'immoble:", err);
+                return res.status(500).json({ error: 'Error del servidor' });
+            } else {
+                res.status(201).json({ message: 'Nou immoble afegit amb èxit!' });
+            }
+        });
+    } catch (err) {
+        console.error("Error en el bloc catch:", err);
+        res.status(500).json({ error: 'Error del servidor' });
+    }
 });
 
+/*
 // Endpoint per eliminar un usuari (A)
-immobles.delete('/immobles/a/eliminarUsuari', verificaToken, (req, res) => {
-    // Aquí afegeix la lògica per eliminar un usuari
-    res.send('Endpoint per eliminar un usuari (DELETE)');
+immobles.delete('/immobles/a/eliminarUsuari/:id_usuari', verificaToken, (req, res) => {
+    
+    if (req.usuario.TipusUsuari !== 'A') {
+        return res.status(403).json({ error: 'Acceso prohibido' }); 
+    }
+
+    const id_usuari = parseInt(req.params.id_usuari);
+
+    if (isNaN(id_usuari) || id_usuari <= 0) {
+        return res.status(400).json({ error: 'El ID del usuario no es válido' }); 
+    }
+
+    // Executar la consulta SQL per eliminar l'usuari de la base de dades
+    db.query('DELETE FROM usuaris WHERE id_usuari = ?', [id_usuari], (err, result) => {
+        if (err) {
+            console.error("Error:", err);
+            return res.status(500).json({ error: 'Error del servidor' }); 
+        } else {
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'No se ha encontrado ningún usuario con este ID' }); 
+            } else {
+                res.status(200).json({ message: 'Usuario eliminado con éxito' }); 
+            }
+        }
+    });
 });
+*/
 
 // Endpoint per eliminar un immoble (A)
-immobles.delete('/immobles/a/eliminarImmoble', verificaToken, (req, res) => {
-    // Aquí afegeix la lògica per eliminar un immoble
-    res.send('Endpoint per eliminar un immoble (DELETE)');
+immobles.delete('/immobles/a/eliminarImmoble/:id_immoble/:id_usuari', verificaToken, async (req, res) => {
+    // Verificar que l'usuari que fa la sol·licitud sigui de tipus "A"
+    if (req.usuario.TipusUsuari !== 'A') {
+        return res.status(403).json({ error: 'Acceso prohibido' });
+    }
+
+    // Recollir els IDs de l'immoble i de l'usuari de la URL
+    const id_immoble = parseInt(req.params.id_immoble);
+    const id_usuari = parseInt(req.params.id_usuari);
+
+    try {
+        // Comprovar si l'immoble pertany a l'usuari especificat
+        const immoble = await new Promise((resolve, reject) => {
+            db.query('SELECT * FROM immobles WHERE id_immoble = ? AND id_usuari = ?', [id_immoble, id_usuari], (err, result) => {
+                if (err) {
+                    console.error("Error en la consulta SELECT:", err);
+                    reject({ status: 500, message: 'Error del servidor' });
+                } else if (!result || result.length === 0) {
+                    reject({ status: 404, message: 'No s\'ha trobat cap immoble amb aquesta ID per a aquest usuari' });
+                } else {
+                    resolve(result[0]); // Només necessitem un resultat
+                }
+            });
+        });
+
+        // Eliminar l'immoble de la base de dades
+        await new Promise((resolve, reject) => {
+            db.query('DELETE FROM immobles WHERE id_immoble = ?', [id_immoble], (err) => {
+                if (err) {
+                    console.error("Error en la consulta DELETE:", err);
+                    reject({ status: 500, message: 'Error del servidor' });
+                } else {
+                    resolve();
+                }
+            });
+        });
+
+        res.status(200).json({ message: 'Immoble eliminat amb èxit' });
+    } catch (error) {
+        res.status(error.status || 500).json({ error: error.message });
+    }
 });
 
 // Funció per netejar les cadenes de text en cas de trobar caràcters especials i espais en blanc al principi

@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require('bcrypt');
 const db = require('./database');
+const verificaToken = require('./auth');
 
 
 const usuaris = express();
@@ -70,5 +71,35 @@ usuaris.post('/app/registre', async (req, res) => {
         });
     });
 });
+
+// Endpoint per eliminar un usuari (A)
+usuaris.delete('/app/a/eliminarUsuari/:id_usuari', verificaToken, (req, res) => {
+    
+    if (req.usuario.TipusUsuari !== 'A') {
+        return res.status(403).json({ error: 'Acceso prohibido' }); 
+    }
+
+    const id_usuari = parseInt(req.params.id_usuari);
+
+    if (isNaN(id_usuari) || id_usuari <= 0) {
+        return res.status(400).json({ error: 'El ID del usuario no es válido' }); 
+    }
+
+    const query = 'DELETE FROM usuaris WHERE id_usuari = ?';
+    const values = [id_usuari];
+    db.query(query, values, (err, result) => {
+        if (err) {
+            console.error("Error:", err);
+            return res.status(500).json({ error: 'Error del servidor' }); 
+        } else {
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'No se ha encontrado ningún usuario con este ID' }); 
+            } else {
+                res.status(200).json({ message: 'Usuario eliminado con éxito' });
+            }
+        }
+    });
+});
+
 
 module.exports = usuaris;
