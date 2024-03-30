@@ -24,7 +24,8 @@ function verificaToken(req, res, next) {
             TipusUsuari: decodedToken.usuario.TipusUsuari
         };
 
-        // Redirigeix l'usuari al seu endpoint corresponent si no s'està intentant accedir ja a l'endpoint adequat
+        // Redirigeix l'usuari al seu endpoint corresponent 
+        //si no s'està intentant accedir ja a l'endpoint adequat
         if (req.method !== 'DELETE') {
             switch (req.usuario.TipusUsuari) {
                 case 'R':
@@ -84,7 +85,7 @@ function verificaToken(req, res, next) {
             }
             next();
         } else {
-            next(); // En cas de petició DELETE
+            next(); // En cas de petició DELETE continua
         }
 
     } catch (error) {
@@ -95,7 +96,7 @@ function verificaToken(req, res, next) {
         try {
             const { accessToken, usuario, error: refreshError } = refrescarToken(refreshToken);
             if (refreshError) {
-                res.status(302).json({ redirectTo: "http://solaria.website" }) // Redirigir a la pàgina de login per obtenir dos nous tokens
+                res.status(302).json({ redirectTo: "http://solaria.website" }) // Redirigir a la pàgina de login
             }
             req.usuario = usuario;
             res
