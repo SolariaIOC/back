@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require('bcrypt');
 const db = require('./database');
+const { verificaToken, verificarTipusUsuari } = require('./auth');
 
 
 const usuaris = express();
@@ -70,5 +71,61 @@ usuaris.post('/app/registre', async (req, res) => {
         });
     });
 });
+
+// Endpoint per eliminar un usuari (A)
+//rep un id_usuari com a parametre per eliminar-ho si existeix.
+usuaris.delete('/app/a/eliminarUsuari/:id_usuari', verificaToken, verificarTipusUsuari('A'), (req, res) => {
+    try {
+        if (req.usuario.TipusUsuari !== 'A') {
+            return res.status(403).json({ error: 'Acceso prohibido' });
+        }
+
+        const id_usuari = parseInt(req.params.id_usuari);
+
+        if (isNaN(id_usuari) || id_usuari <= 0) {
+            return res.status(400).json({ error: 'El ID del usuario no es válido' });
+        }
+
+        const query = 'DELETE FROM usuaris WHERE id_usuari = ?';
+        const values = [id_usuari];
+        db.query(query, values, (err, result) => {
+            if (err) {
+                console.error("Error:", err);
+                return res.status(500).json({ error: 'Error del servidor' });
+            } else {
+                if (result.affectedRows === 0) {
+                    return res.status(404).json({ error: 'No se encontraron resultados' });
+                } else {
+                    res.status(200).json({ message: 'Usuario eliminado con éxito' });
+                }
+            }
+        });
+    } catch (error) {
+        console.error("Error en el bloque .catch:", error);
+        res.status(500).json({ error: 'Error del servidor' });
+    }
+});
+ 
+
+// Endpoint per a la llista de tots els usuaris (A)
+usuaris.get('/app/a/llistaUsuaris', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
+    try {
+        db.query('SELECT * FROM usuaris', (error, results) => {
+            if (error) {
+                console.error("Error:", error);
+                return res.status(500).json({ error: 'Error en el servidor' });
+            }
+            if (!results || results.length === 0) {
+                return res.status(404).json({ error: 'No se encontraron resultados' });
+            }
+            res.json(results);
+        });
+    } catch (error) {
+        console.error("Error en el bloc catch:", error);
+        res.status(500).json("Error del servidor");
+    }
+});
+
+
 
 module.exports = usuaris;
