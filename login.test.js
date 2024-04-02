@@ -13,7 +13,9 @@ jest.mock('./database', () => {
 
 const mockUser = {
     Email: 'test@example.com',
-    Contrasenya: '$2b$10$H8v9MkiyQFtM07IiZvxzfuUZdKdqwT/8nBnwVBqZkYixF7rA9nl8G'
+    Contrasenya: '$2b$10$H8v9MkiyQFtM07IiZvxzfuUZdKdqwT/8nBnwVBqZkYixF7rA9nl8G',
+    Nom: 'Alejandro',
+    Cognoms: 'Gomez',
 };
 
 bcrypt.compare = jest.fn().mockReturnValue(true);
@@ -28,7 +30,15 @@ describe('Test del endpoint Login', () => {
             .post('/login')
             .send({ Email: 'test@example.com', Contrasenya: 'password' });
         expect(response.statusCode).toBe(200);
-        expect(response.body.token).toBe('mockedToken');
+        expect(response.body.message).toBe("Inicio de sesión exitoso");
+        expect(response.body.datosUsuario).toEqual({
+            nombre: mockUser.Nom,
+            apellidos: mockUser.Cognoms,
+            email: mockUser.Email,
+        });
+        expect(response.headers['set-cookie']).toHaveLength(2);
+        expect(response.headers['set-cookie'][0]).toContain('refreshToken');
+        expect(response.headers['set-cookie'][1]).toContain('token');
     });
 
     test('Credenciales incorrectas', async () => {

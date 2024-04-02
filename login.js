@@ -26,7 +26,14 @@ login.post('/login', async (req, res) => {
         res
             .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' })
             .cookie('token', token, { httpOnly: true, sameSite: 'strict' })
-            .send("Inicio de sesión exitoso");
+            .json({
+                message: "Inicio de sesión exitoso",
+                datosUsuario: {
+                    nombre: usuario.Nom,
+                    apellidos: usuario.Cognoms,
+                    email: usuario.Email
+                }
+            });
     });
 });
 module.exports = login;
