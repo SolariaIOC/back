@@ -55,6 +55,3 @@ function verificarTipusUsuari(tipusUsuariPermes) {
 
 module.exports = { verificaToken, verificarTipusUsuari };
 
-
-module.exports = verificaToken;
-
