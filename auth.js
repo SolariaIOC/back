@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { refrescarToken } = require('./tokenUtils.js');
 
+
 // Middleware per verificar el token i obtenir l'ID de l'usuari
 function verificaToken(req, res, next) {
     const authorizationHeader = req.cookies['token'];
@@ -24,12 +25,15 @@ function verificaToken(req, res, next) {
         try {
             const { accessToken, usuario, error: refreshError } = refrescarToken(refreshToken);
             if (refreshError) {
+                res
+                    .clearCookie('refreshToken', { httpOnly: true, sameSite: 'strict' })
+                    .clearCookie('token', { httpOnly: true, sameSite: 'strict' });
                 res.status(302).json({ redirectTo: "http://solaria.website" }); // Redirigir a la pàgina de login
             }
             req.usuario = usuario;
             res
-                .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' })
-                .cookie('token', accessToken, { httpOnly: true, sameSite: 'strict' });
+                .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict', secure: true })
+                .cookie('token', accessToken, { httpOnly: true, sameSite: 'strict', secure: true });
             next();
         } catch (error) {
             return res.status(400);

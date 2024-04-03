@@ -21,11 +21,11 @@ login.post('/login', async (req, res) => {
         if (!contrasenyaValida) {
             return res.status(400).json({ error: 'Credenciales incorrectas' });
         }
-        const token = jwt.sign({ usuario }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        const token = jwt.sign({ usuario }, process.env.JWT_SECRET, { expiresIn: '15m' });
         const refreshToken = jwt.sign({ usuario }, process.env.JWT_SECRET, { expiresIn: '1d' });
         res
-            .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict' })
-            .cookie('token', token, { httpOnly: true, sameSite: 'strict' })
+            .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict', secure: true })
+            .cookie('token', token, { httpOnly: true, sameSite: 'strict', secure: true })
             .json({
                 message: "Inicio de sesión exitoso",
                 datosUsuario: {
