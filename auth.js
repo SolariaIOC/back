@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const { refrescarToken } = require('./tokenUtils.js');
 
+
 // Middleware per verificar el token i obtenir l'ID de l'usuari
 function verificaToken(req, res, next) {
     const authorizationHeader = req.cookies['token'];
@@ -27,13 +28,13 @@ function verificaToken(req, res, next) {
             }
             req.usuario = usuario;
             res
-            .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict', secure: true })
-            .cookie('token', accessToken, { httpOnly: true, sameSite: 'strict', secure: true });
-        next();
-    } catch (error) {
-        return res.status(400);
+                .cookie('refreshToken', refreshToken, { httpOnly: true, sameSite: 'strict', secure: true })
+                .cookie('token', accessToken, { httpOnly: true, sameSite: 'strict', secure: true });
+            next();
+        } catch (error) {
+            return res.status(400);
+        }
     }
-}
 }
 
 // Funció per verificar el tipus d'usuari
@@ -42,16 +43,15 @@ function verificarTipusUsuari(tipusUsuariPermes) {
         try {
             // Verificar si el tipus d'usuari del token coincideix amb el permès o si es null o undefined
             if (!req.usuario || (tipusUsuariPermes && req.usuario.TipusUsuari !== tipusUsuariPermes)) {
-                return res.status(401).json({ error: 'Acceso prohibido' });
+                return res.status(403).json({ error: ERROR_ACCES_PROHIBIT });
             }
             // Si coincideix, permetre que continuï l'execució
             next();
         } catch (error) {
-            return res.status(500).json({ error: 'Error en la verificación del tipo de usuario' });
+            return res.status(403).json({ error: ERROR_ACCES_PROHIBIT });
         }
     };
 }
 
 module.exports = { verificaToken, verificarTipusUsuari };
-
 
