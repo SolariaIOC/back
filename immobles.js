@@ -14,9 +14,9 @@ immobles.use(express.json());
 // Endpoint per obtenir llistat immobles (accessible per tothom)
 immobles.get('/immobles', async (req, res) => {
     try {
-        db.query('SELECT * FROM immobles', (err, results) => {
-            if (err) {
-                console.log("Error:", err);
+        db.query('SELECT * FROM immobles', (error, results) => {
+            if (error) {
+                console.log("Error:", error);
                 return res.status(500).json("Error del servidor");
             }
             if (!results || results.length === 0) {
@@ -82,17 +82,17 @@ immobles.get('/immobles/r', verificaToken, verificarTipusUsuari('R'), async (req
         const idUsuariToken = req.usuario.id_usuari;
 
         db.query('SELECT * FROM immobles WHERE id_usuari = ?', [idUsuariToken], (error, results) => {
-            if (error) {
-                console.error("Error:", error);
+            if (err) {
+                console.error("Error:", err);
                 return res.status(500).json({ error: 'Error en el servidor' });
             }
             if (!results || results.length === 0) {
                 return res.status(404).json({ error: 'No se encontraron resultados' });
             }
-            res.json(results);
+            res.status(200).json(results);
         });
-    } catch (error) {
-        console.error("Error en el bloc catch:", error);
+    } catch (err) {
+        console.error("Error en el bloc catch:", err);
         res.status(500).json("Error del servidor");
     }
 });
@@ -129,11 +129,6 @@ immobles.delete('/immobles/r/eliminar/:id_immoble', verificaToken, verificarTipu
     // Recollim el id_usuari del token i la id_immoble de la URL
     const { id_usuari, TipusUsuari } = req.usuario;
     const id_immoble_param = parseInt(req.params.id_immoble);
-
-    // Verifiquem si el tipus d'usuari és "R"
-    if (TipusUsuari !== "R") {
-        return res.status(403).json({ error: 'Usuario no registrado' });
-    }
 
     // Verifiquem si la id_immoble és un número vàlid
     if (isNaN(id_immoble_param) || id_immoble_param <= 0) {
