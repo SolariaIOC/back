@@ -4,7 +4,7 @@ const db = require('./database.js');
 const immobles = require("./immobles.js");
 
 jest.mock('./database', () => ({
-  query: jest.fn(),
+    query: jest.fn(),
 }));
 
 
@@ -17,7 +17,9 @@ describe('Proves sobre /immobles', () => {
     it('Hauria de retornar la llista d\'immobles correctament', async () => {
         const mockResults = [
             { id_immoble: 1, id_usuari: 1, Carrer: 'Carrer 1', Numero: '10', Pis: '1r', Codi_Postal: '08001', Poblacio: 'Barcelona', Descripcio: 'Bonic pis al centre de la ciutat', Preu: 120000.00, Imatge: 'imatge1.jpg' },
-            { id_immoble: 2, id_usuari: 2, Carrer: 'Carrer 2', Numero: '20', Pis: '2n', Codi_Postal: '08002', Poblacio: 'Barcelona', Descripcio: 'Àtic amb vistes al mar', Preu: 250000.00, Imatge: 'imatge2.jpg' }
+            { id_immoble: 2, id_usuari: 2, Carrer: 'Carrer 2', Numero: '20', Pis: '2n', Codi_Postal: '08002', Poblacio: 'Girona', Descripcio: 'Àtic amb vistes al mar', Preu: 250000.00, Imatge: 'imatge2.jpg' },
+            { id_immoble: 3, id_usuari: 1, Carrer: 'Carrer 3', Numero: '30', Pis: '3r', Codi_Postal: '08003', Poblacio: 'Sabadell', Descripcio: 'Casa amb vistes a la muntanya', Preu: 150000.00, Imatge: 'imatge3.jpg' },
+            { id_immoble: 4, id_usuari: 2, Carrer: 'Carrer 4', Numero: '40', Pis: '4t', Codi_Postal: '08003', Poblacio: 'Barcelona', Descripcio: 'Casa amb vistes al camp', Preu: 150000.00, Imatge: 'imatge4.jpg' }
         ];
         db.query.mockImplementation((query, callback) => {
             callback(null, mockResults);
@@ -64,14 +66,17 @@ describe('Proves sobre /immobles/codi_postal/:codiPostal', () => {
         ];
         db.query.mockImplementation((query, values, callback) => {
             if (query.includes('Codi_Postal')) {
-                callback(null, mockResults);
+                const filteredResults = mockResults.filter(result => result.Codi_Postal === codiPostal);
+                callback(null, filteredResults);
             }
         });
-
+    
         const response = await request(app).get(`/immobles/codi_postal/${codiPostal}`);
         expect(response.status).toBe(200);
-        expect(response.body).toEqual(mockResults);
+        expect(response.body).toEqual(mockResults); // Comprova si la resposta coincideix amb les dades esperades
+        expect(mockResults.every(result => result.Codi_Postal === codiPostal)).toBe(true);
     });
+    
 
     it('Hauria de retornar un error del servidor quan falla la consulta a la base de dades', async () => {
         const codiPostal = '08001';
@@ -121,6 +126,7 @@ describe('Proves sobre /immobles/poblacio/:poblacio', () => {
         const response = await request(app).get(`/immobles/poblacio/${poblacio}`);
         expect(response.status).toBe(200);
         expect(response.body).toEqual(mockResults);
+        expect(mockResults.every(result => result.Poblacio === poblacio)).toBe(true);
     });
 
     it('Hauria de retornar un error del servidor quan falla la consulta a la base de dades', async () => {

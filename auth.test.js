@@ -1,42 +1,34 @@
 const jwt = require('jsonwebtoken');
 const { verificaToken, verificarTipusUsuari } = require('./auth');
 
-// Mock de tokenUtils.js
 jest.mock('./tokenUtils.js', () => {
-  return {
-    refrescarToken: jest.fn().mockImplementationOnce(refreshToken => {
-      if (refreshToken === 'invalid_refresh_token') {
-        return { error: 'Token de refresco inválido' };
-      }
-      return { accessToken: 'new_access_token', usuario: { id: 1, nombre: 'Usuario' } };
-    })
-  };
+    return {
+        refrescarToken: jest.fn().mockImplementationOnce(refreshToken => {
+            if (refreshToken === 'invalid_refresh_token') {
+                return { error: 'Token de refresco inválido' };
+            }
+            return { accessToken: 'new_access_token', usuario: { id: 1, nombre: 'Usuario' } };
+        })
+    };
 });
 
-
-// Mock de process.env.JWT_SECRET
+// Mock de process.env.JWT_SECRET  i  process.env.REDIRECT_URL
 process.env.JWT_SECRET = 'jwt_key_secreta';
-
-// Mock de process.env.REDIRECT_URL
 process.env.REDIRECT_URL = 'http://prova.com';
 
 
 // Proves funció VerificaToken
 describe('Middleware verificaToken', () => {
-    // Prueba para verificar si se proporciona un token válido
-    it('debería pasar si se proporciona un token válido', async () => {
+    it('Hauria de passar si es proporciona un token vàlid', async () => {
         const token = jwt.sign({ usuario: { id: 1, nombre: 'Usuario' } }, process.env.JWT_SECRET);
         const req = { cookies: { token } };
         const res = {};
         const next = jest.fn();
 
         await verificaToken(req, res, next);
-
         expect(next).toHaveBeenCalled();
     });
-
-    // Prueba para verificar si no se proporciona ningún token
-    it('debería retornar un error 401 si no se proporciona ningún token', async () => {
+    it('hauria de retornar un error 401 si no es proporciona cap token', async () => {
         const req = { cookies: {} };
         const res = {
             status: jest.fn().mockReturnThis(),
@@ -45,13 +37,11 @@ describe('Middleware verificaToken', () => {
         const next = jest.fn();
 
         await verificaToken(req, res, next);
-
         expect(res.status).toHaveBeenCalledWith(401);
-        expect(res.json).toHaveBeenCalledWith({ error: 'Token no proporcionat' });
+        expect(res.json).toHaveBeenCalledWith({ error: 'Token no proporcionado' });
     });
 
-    // Prueba para verificar si se proporciona un token de refresco inválido
-    it('debería retornar un error 302 si se proporciona un token de refresco inválido', async () => {
+    it('hauria de retornar un error 302 si és proporciona un token de refresc invàlid', async () => {
         const token = jwt.sign({ usuario: { id: 1, nombre: 'Usuario' } }, process.env.JWT_SECRET);
         const req = { cookies: { token, refreshToken: 'invalid_refresh_token' } };
         const res = {
@@ -61,7 +51,6 @@ describe('Middleware verificaToken', () => {
         const next = jest.fn();
 
         await verificaToken(req, res, next);
-
         expect(res.status).toHaveBeenCalledWith(302);
         expect(res.json).toHaveBeenCalledWith({ redirectTo: process.env.REDIRECT_URL });
     });
@@ -70,47 +59,42 @@ describe('Middleware verificaToken', () => {
 
 // Proves funció verificaTipusUsuari
 describe('Middleware verificarTipusUsuari', () => {
-  // Prova per verificar si el tipus d'usuari coincideix
-  it('hauria de permetre l\'accés si el tipus d\'usuari coincideix', () => {
-      const req = { usuario: { id: 1, nombre: 'Usuari', TipusUsuari: 'A' } };
-      const res = {};
-      const next = jest.fn();
+    it('hauria de permetre l\'accés si el tipus d\'usuari coincideix', () => {
+        const req = { usuario: { id: 1, nombre: 'Usuari', TipusUsuari: 'A' } };
+        const res = {};
+        const next = jest.fn();
+        const middleware = verificarTipusUsuari('A');
 
-      const middleware = verificarTipusUsuari('A');
-      middleware(req, res, next);
+        middleware(req, res, next);
+        expect(next).toHaveBeenCalled();
+    });
 
-      expect(next).toHaveBeenCalled();
-  });
+    it('hauria de retornar un error 403 si no es proporciona cap usuari', () => {
+        const req = {};
+        const res = {
+            status: jest.fn().mockReturnThis(),
+            json: jest.fn()
+        };
+        const next = jest.fn();
+        const middleware = verificarTipusUsuari('A');
 
-  // Prova per verificar si no es proporciona cap usuari
-  it('hauria de retornar un error 401 si no es proporciona cap usuari', () => {
-      const req = {};
-      const res = {
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn()
-      };
-      const next = jest.fn();
+        middleware(req, res, next);
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Acceso prohibido' });
+    });
 
-      const middleware = verificarTipusUsuari('A');
-      middleware(req, res, next);
+    it('hauria de retornar un error 403 si el tipus d\'usuari no és A', () => {
+        const req = { usuario: { id: 1, nombre: 'Usuari', TipusUsuari: 'B' } };
+        const res = {
+            status: jest.fn(() => res),
+            json: jest.fn(),
+        };
+        const next = jest.fn();
+        const middleware = verificarTipusUsuari('A');
 
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Acceso prohibido' });
-  });
-
-  // Prova per verificar si el tipus d'usuari no coincideix
-  it('hauria de retornar un error 401 si el tipus d\'usuari no coincideix', () => {
-      const req = { usuario: { id: 1, nombre: 'Usuari', TipusUsuari: 'R' } };
-      const res = {
-          status: jest.fn().mockReturnThis(),
-          json: jest.fn()
-      };
-      const next = jest.fn();
-
-      const middleware = verificarTipusUsuari('A');
-      middleware(req, res, next);
-
-      expect(res.status).toHaveBeenCalledWith(401);
-      expect(res.json).toHaveBeenCalledWith({ error: 'Acceso prohibido' });
-  });
+        middleware(req, res, next);
+        expect(next).not.toHaveBeenCalled();
+        expect(res.status).toHaveBeenCalledWith(403);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Acceso prohibido' });
+    });
 });

@@ -8,7 +8,7 @@ const db = require('./database');
 const { verificaToken, verificarTipusUsuari } = require('./auth');
 const ERROR_SERVIDOR = "Error del servidor";
 const ERROR_NO_RESULTATS = "No se encontraron resultados";
-const ERROR_ACCES_PROHIBIT = "Acceso prohibido";
+//const ERROR_ACCES_PROHIBIT = "Acceso prohibido";
 
 const immobles = express();
 immobles.use(express.json());
@@ -110,7 +110,7 @@ immobles.post('/immobles/r/afegir', verificaToken, verificarTipusUsuari('R'), as
 
         // Comprovació de dades vàlides
         if (!Carrer || !Numero || !Codi_Postal || !Poblacio || !Preu) {
-            return res.status(400).json({ error: 'Datos inválidos' });
+            return res.status(400).json({ error: 'Faltan datos' });
         }
 
         db.query('INSERT INTO immobles (id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge], (err, result) => {
@@ -222,7 +222,12 @@ immobles.post('/immobles/a/afegirUsuariImmoble', verificaToken, verificarTipusUs
 
     try {
         // Recollir totes les dades de l'immoble del cos de la sol·licitud
-        const { id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+        let { id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+
+        // Comprovació de dades vàlides
+        if (!id_usuari || !Carrer || !Numero || !Codi_Postal || !Poblacio || !Preu) {
+            return res.status(400).json({ error: 'Faltan datos' });
+        }
 
         // Consulta SQL per afegir un nou immoble a la bbdd amb l'id de l'usuari rebut en el cos de la sol·licitud
         db.query('INSERT INTO immobles (id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge], (err, result) => {
