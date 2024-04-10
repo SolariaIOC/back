@@ -1,1 +1,2 @@
- de momento he implementado los test para usuarios "anónimos" y usuarios tipo "R". En estos últimos no consigo pasar un error 403 que me lo pasa como 500 y por más vueltas que he dado, no consigo ver que lo provoca.
+He actualizado varias de las funciones en los test y separado las pruebas por cada tipo de usuario
+para facilitar la lectura y para poder trabajar más cómodamente.
