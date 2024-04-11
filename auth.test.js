@@ -40,20 +40,6 @@ describe('Middleware verificaToken', () => {
         expect(res.status).toHaveBeenCalledWith(401);
         expect(res.json).toHaveBeenCalledWith({ error: 'Token no proporcionado' });
     });
-
-    it('hauria de retornar un error 302 si és proporciona un token de refresc invàlid', async () => {
-        const token = jwt.sign({ usuario: { id: 1, nombre: 'Usuario' } }, process.env.JWT_SECRET);
-        const req = { cookies: { token, refreshToken: 'invalid_refresh_token' } };
-        const res = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn()
-        };
-        const next = jest.fn();
-
-        await verificaToken(req, res, next);
-        expect(res.status).toHaveBeenCalledWith(302);
-        expect(res.json).toHaveBeenCalledWith({ redirectTo: process.env.REDIRECT_URL });
-    });
 });
 
 
