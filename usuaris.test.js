@@ -122,4 +122,3 @@ describe('Test del endpoint /app/registre', () => {
     });
 });
 
-
