@@ -126,6 +126,46 @@ usuaris.get('/app/a/llistaUsuaris', verificaToken, verificarTipusUsuari('A'), as
     }
 });
 
+// Endpoint per actualitzar les dades de qualsevol usuari (A)
+usuaris.put('/app/a/actualitzarUsuari/:id_usuari', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
+    try {
+        const id_usuari = parseInt(req.params.id_usuari);
+        const { Email, Nom, Cognoms, Contrasenya, TipusUsuari } = req.body;
+
+        if (isNaN(id_usuari) || id_usuari <= 0) {
+            return res.status(400).json({ error: 'El ID del usuario no es válido' });
+        }
+        if (!Email || !Nom || !Cognoms || !Contrasenya || !TipusUsuari) {
+            return res.status(400).json({ error: 'Faltan datos' });
+        }
+
+        // Hashear la contrasenya abans d'actualitzar-la
+        try {
+            const hashedPassword = await bcrypt.hash(Contrasenya, 10);
+
+            // Actualitzar les dades de l'usuari a la base de dades
+            db.query('UPDATE usuaris SET Email = ?, Nom = ?, Cognoms = ?, Contrasenya = ?, TipusUsuari = ? WHERE id_usuari = ?',
+                [Email, Nom, Cognoms, hashedPassword, TipusUsuari, id_usuari],
+                (err, result) => {
+                    if (err) {
+                        console.error("Error en l'actualització de l'usuari:", err);
+                        return res.status(500).json({ error: 'Error del servidor' });
+                    } else {
+                        res.status(200).json({ message: 'Usuario actualizado con éxito' });
+                    }
+                });
+        } catch (error) {
+            console.log("Error al hashear la contraseña:", error);
+            return res.status(500).json({ error: 'Error al hashear la contraseña' });
+        }
+    } catch (error) {
+        console.error("Error en el bloque catch:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+
 
 
 module.exports = usuaris;

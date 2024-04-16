@@ -131,11 +131,6 @@ immobles.post('/immobles/r/afegir', verificaToken, verificarTipusUsuari('R'), as
     }
 });
 
-
-
-
-
-
 // Endpoint per eliminar un immoble per la seva id_immoble (R)
 immobles.delete('/immobles/r/eliminar/:id_immoble', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
     
@@ -187,6 +182,52 @@ immobles.delete('/immobles/r/eliminar/:id_immoble', verificaToken, verificarTipu
         }
     }
 });
+
+// Endpoint per actualitzar un immoble (R)
+immobles.put('/immobles/r/actualitzar/:id_immoble', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
+    try {
+        const id_immoble = parseInt(req.params.id_immoble);
+        const id_usuari = req.usuario.id_usuari;
+        const { Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+
+        if (isNaN(id_immoble) || id_immoble <= 0) {
+            return res.status(400).json({ error: 'La ID del inmueble no es válida' });
+        }
+        if (!Carrer || !Numero || !Codi_Postal || !Poblacio || !Preu) {
+            return res.status(400).json({ error: 'Faltan datos' });
+        }
+
+        // Verificar si l'immoble pertany a l'usuari autenticat
+        const inmueble = await new Promise((resolve, reject) => {
+            db.query('SELECT * FROM immobles WHERE id_immoble = ? AND id_usuari = ?', [id_immoble, id_usuari], (err, result) => {
+                if (err) {
+                    console.error("Error en la consulta SELECT:", err);
+                    reject({ status: 500, message: ERROR_SERVIDOR });
+                } else if (!result || result.length === 0) {
+                    reject({ status: 404, message: ERROR_NO_RESULTATS });
+                } else {
+                    resolve(result[0]); // hem de rebre un resultat
+                }
+            });
+        });
+
+        // Actualitzar les dades rebudes a la bbdd
+        db.query('UPDATE immobles SET Carrer = ?, Numero = ?, Pis = ?, Codi_Postal = ?, Poblacio = ?, Descripcio = ?, Preu = ?, Imatge = ? WHERE id_immoble = ?',
+            [Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge, id_immoble],
+            (err, result) => {
+                if (err) {
+                    console.error("Error en la actualización del inmueble:", err);
+                    return res.status(500).json({ error: ERROR_SERVIDOR });
+                } else {
+                    res.status(200).json({ message: 'Inmueble actualizado con éxito' });
+                }
+            });
+    } catch (error) {
+        console.error("Error en el bloque catch:", error);
+        res.status(error.status || 500).json({ error: error.message });
+    }
+});
+
 
 // Endpoint per a la llista d'immobles per Email usuari (A)
 immobles.get('/immobles/a/llistaImmobles/:Email', verificaToken, verificarTipusUsuari('A'), async(req, res) => {
@@ -284,6 +325,36 @@ immobles.delete('/immobles/a/eliminarImmoble/:id_immoble/:id_usuari', verificaTo
         res.status(error.status || 500).json({ error: error.message });
     }
 
+});
+
+// Endpoint per actualitzar un immoble de qualsevol usuari registrat (A)
+immobles.put('/immobles/a/actualitzar/:id_immoble', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
+    try {
+        const id_immoble = parseInt(req.params.id_immoble);
+        const { id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+
+        if (isNaN(id_immoble) || id_immoble <= 0) {
+            return res.status(400).json({ error: 'La ID del inmueble no es válida' });
+        }
+        if (!id_usuari || !Carrer || !Numero || !Codi_Postal || !Poblacio || !Preu) {
+            return res.status(400).json({ error: 'Faltan datos' });
+        }
+
+        // Actualitzar les dades de l'immoble a la bbdd
+        db.query('UPDATE immobles SET id_usuari = ?, Carrer = ?, Numero = ?, Pis = ?, Codi_Postal = ?, Poblacio = ?, Descripcio = ?, Preu = ?, Imatge = ? WHERE id_immoble = ?',
+            [id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge, id_immoble],
+            (err, result) => {
+                if (err) {
+                    console.error("Error en la actualización del inmueble:", err);
+                    return res.status(500).json({ error: ERROR_SERVIDOR });
+                } else {
+                    res.status(200).json({ message: 'Inmueble actualizado con éxito' });
+                }
+            });
+    } catch (error) {
+        console.error("Error en el bloque catch:", error);
+        res.status(error.status || 500).json({ error: error.message });
+    }
 });
 
 

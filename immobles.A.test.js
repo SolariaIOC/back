@@ -340,5 +340,3 @@ describe('DELETE /immobles/a/eliminarImmoble/:id_immoble/:id_usuari', () => {
   });
 });
 
-
-
