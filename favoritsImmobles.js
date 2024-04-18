@@ -46,8 +46,8 @@ favoritsImmobles.get('/favorits', verificaToken, verificarTipusUsuari('R'), (req
     }
 });
 
-// Endpoint per afegir o eliminar immobles favorits d'un usuari
-favoritsImmobles.post('/gestionarImmobleFavorit', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
+// Endpoint per afegir un immoble a la llista de favorits d'un usuari
+favoritsImmobles.post('/afegirImmobleFavorit', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
     try {
         const id_usuari = req.usuario.id_usuari;
         const { id_immoble } = req.body;
@@ -56,7 +56,7 @@ favoritsImmobles.post('/gestionarImmobleFavorit', verificaToken, verificarTipusU
             return res.status(400).json({ error: 'El ID del inmueble no es válido' });
         }
 
-        // Verifica si l'immoble ja és favorit de l'usuari
+        // Comprovar si l'immoble està a la llista de favorits de l'usuari
         const query = 'SELECT * FROM immobles_favorits WHERE id_usuari = ? AND id_immoble = ?';
         db.query(query, [id_usuari, id_immoble], (error, result) => {
             if (error) {
@@ -65,7 +65,7 @@ favoritsImmobles.post('/gestionarImmobleFavorit', verificaToken, verificarTipusU
             }
 
             if (result.length === 0) {
-                // Si no és favorit, l'afegiim a la taula
+                // Si no és favorit, l'afegim a la taula
                 const insertQuery = 'INSERT INTO immobles_favorits (id_usuari, id_immoble) VALUES (?, ?)';
                 db.query(insertQuery, [id_usuari, id_immoble], (error, result) => {
                     if (error) {
@@ -75,19 +75,41 @@ favoritsImmobles.post('/gestionarImmobleFavorit', verificaToken, verificarTipusU
                     res.status(200).json({ message: 'Inmueble añadido a favoritos con éxito' });
                 });
             } else {
-                // Si ja és favorit, s'elimina de la taula
-                const deleteQuery = 'DELETE FROM immobles_favorits WHERE id_usuari = ? AND id_immoble = ?';
-                db.query(deleteQuery, [id_usuari, id_immoble], (error, result) => {
-                    if (error) {
-                        console.error('Error eliminando inmueble de favoritos:', error);
-                        return res.status(500).json({ error: ERROR_SERVIDOR });
-                    }
-                    res.status(200).json({ message: 'Inmueble eliminado de favoritos con éxito' });
-                });
+                return res.status(409).json({ error: 'El inmueble ya está en la lista de favoritos' });
             }
         });
     } catch (error) {
         console.error('Error gestionando el inmueble favorito:', error);
+        res.status(500).json({ error: ERROR_SERVIDOR });
+    }
+});
+
+// Endpoint per eliminar un immoble de la llista de favorits d'un usuari
+favoritsImmobles.delete('/eliminarImmobleFavorit', verificaToken, verificarTipusUsuari('R'), (req, res) => {
+    try {
+        const id_usuari = req.usuario.id_usuari;
+        const { id_immoble } = req.body;
+
+        if (!id_immoble || isNaN(id_immoble)) {
+            return res.status(400).json({ error: 'El ID del inmueble no es válido' });
+        }
+
+        // Comprovar si l'immoble està a la llista de favorits de l'usuari
+        const query = 'DELETE FROM immobles_favorits WHERE id_usuari = ? AND id_immoble = ?';
+        db.query(query, [id_usuari, id_immoble], (error, result) => {
+            if (error) {
+                console.error('Error eliminando inmueble de favoritos:', error);
+                return res.status(500).json({ error: ERROR_SERVIDOR });
+            }
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: 'El inmueble no está en la lista de favoritos del usuario' });
+            }
+
+            res.status(200).json({ message: 'Inmueble eliminado de favoritos con éxito' });
+        });
+    } catch (error) {
+        console.error('Error eliminando el inmueble de favoritos:', error);
         res.status(500).json({ error: ERROR_SERVIDOR });
     }
 });
