@@ -4,7 +4,8 @@ const login = require("./login.js")
 const immobles = require("./immobles.js");
 const usuaris = require("./usuaris.js");
 const logout = require("./logout.js");
-const calculaHipoteca = require("./simulador-hipoteca.js");
+const calculaHipoteca = require("./simuladorHipoteca.js");
+const favoritsImmobles = require('./favoritsImmobles.js');
 const cookieParser = require('cookie-parser');
 const https = require('https');
 const fs = require('fs');
@@ -25,6 +26,7 @@ app.use('/', immobles);
 app.use('/', usuaris);
 app.use('/', logout);
 app.use('/', calculaHipoteca);
+app.use('/', favoritsImmobles);
 
 
 /*const SSLoptions = {
