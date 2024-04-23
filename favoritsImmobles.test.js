@@ -41,7 +41,7 @@ describe('Proves unitàries per immobles favorits:', () => {
     let mockRequest;
 
     beforeEach(() => {
-        // Configuració bàsica de l'objecte mockRequest amb l'ID d'usuari mock i el tipus d'usuari "R"
+        // Configuració bàsica de l'objecte mockRequest amb mock d'usuari "R"
         mockRequest = {
             body: {
                 id_immoble: 1
