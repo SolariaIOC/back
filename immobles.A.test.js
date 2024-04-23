@@ -340,3 +340,113 @@ describe('DELETE /immobles/a/eliminarImmoble/:id_immoble/:id_usuari', () => {
   });
 });
 
+
+// Proves per actulitzar dades d'un immoble de qualsevol usuari (A)
+describe('PUT /immobles/a/actualitzar/:id_immoble', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('hauria de poder actualitzar un immoble amb dades vàlides', async () => {
+    const mockIdImmoble = 1;
+    const mockUserId = 12;
+    const mockRequestBody = {
+      id_usuari: mockUserId,
+      Carrer: 'Carrer actualitzat',
+      Numero: '20',
+      Pis: '1r',
+      Codi_Postal: '08001',
+      Poblacio: 'Barcelona',
+      Descripcio: 'Pis actualitzat',
+      Preu: 150000,
+      Imatge: 'imatge_actualitzada.jpg'
+    };
+
+    db.query.mockImplementationOnce((query, values, callback) => {
+      // Simulem l'èxit de l'actualització
+      callback(null, { affectedRows: 1 });
+    });
+
+    const response = await request(app)
+      .put(`/immobles/a/actualitzar/${mockIdImmoble}`)
+      .send(mockRequestBody);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ message: 'Inmueble actualizado con éxito' });
+  });
+
+  it('hauria de retornar un error 400 si falten dades en la sol·licitud', async () => {
+    const mockIdImmoble = 1;
+    const mockUserId = 12;
+    const mockRequestBody = {
+      id_usuari: mockUserId,
+      Carrer: 'Carrer actualitzat',
+     // manca la dada numero
+      Codi_Postal: '08001',
+      Poblacio: 'Barcelona',
+      Preu: 150000,
+      Imatge: 'imatge_actualitzada.jpg'
+    };
+
+    const response = await request(app)
+      .put(`/immobles/a/actualitzar/${mockIdImmoble}`)
+      .send(mockRequestBody);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'Faltan datos' });
+  });
+
+  it('hauria de retornar un error 400 si la ID de l\'immoble no és vàlida', async () => {
+    const mockIdImmoble = 'immoble_invalid';
+    const mockUserId = 12;
+    const mockRequestBody = {
+      id_usuari: mockUserId,
+      Carrer: 'Carrer actualitzat',
+      Numero: '20',
+      Pis: '1r',
+      Codi_Postal: '08001',
+      Poblacio: 'Barcelona',
+      Descripcio: 'Pis actualitzat',
+      Preu: 150000,
+      Imatge: 'imatge_actualitzada.jpg'
+    };
+
+    const response = await request(app)
+      .put(`/immobles/a/actualitzar/${mockIdImmoble}`)
+      .send(mockRequestBody);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ error: 'La ID del inmueble no es válida' });
+  });
+
+  it('hauria de retornar un error 500 si hi ha un error en la consulta a la base de dades', async () => {
+    const mockIdImmoble = 1;
+    const mockUserId = 12;
+    const mockRequestBody = {
+      id_usuari: mockUserId,
+      Carrer: 'Carrer actualitzat',
+      Numero: '20',
+      Pis: '1r',
+      Codi_Postal: '08001',
+      Poblacio: 'Barcelona',
+      Descripcio: 'Pis actualitzat',
+      Preu: 150000,
+      Imatge: 'imatge_actualitzada.jpg'
+    };
+
+    db.query.mockImplementationOnce((query, values, callback) => {
+      // Simulem un error en l'actualització
+      callback(new Error('Error en la consulta UPDATE'), null);
+    });
+
+    const response = await request(app)
+      .put(`/immobles/a/actualitzar/${mockIdImmoble}`)
+      .send(mockRequestBody);
+
+    expect(response.status).toBe(500);
+    expect(response.body).toEqual({ error: 'Error del servidor' });
+  });
+});
+
+
+
