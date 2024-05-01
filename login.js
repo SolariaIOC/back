@@ -32,7 +32,7 @@ login.post('/login', async (req, res) => {
                     nombre: usuario.Nom,
                     apellidos: usuario.Cognoms,
                     email: usuario.Email,
-                    tipusUsuari: usuario.tipusUsuari
+                    tipusUsuari: usuario.TipusUsuari
                 }
             });
     });
