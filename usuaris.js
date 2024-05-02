@@ -135,25 +135,39 @@ usuaris.put('/app/a/actualitzarUsuari/:id_usuari', verificaToken, verificarTipus
         if (isNaN(id_usuari) || id_usuari <= 0) {
             return res.status(400).json({ error: 'El ID del usuario no es válido' });
         }
-        if (!Email || !Nom || !Cognoms || !Contrasenya || !TipusUsuari) {
+        if (!Email || !Nom || !Cognoms || !TipusUsuari) {
             return res.status(400).json({ error: 'Faltan datos' });
         }
 
         // Hashear la contrasenya abans d'actualitzar-la
         try {
-            const hashedPassword = await bcrypt.hash(Contrasenya, 10);
 
-            // Actualitzar les dades de l'usuari a la base de dades
-            db.query('UPDATE usuaris SET Email = ?, Nom = ?, Cognoms = ?, Contrasenya = ?, TipusUsuari = ? WHERE id_usuari = ?',
-                [Email, Nom, Cognoms, hashedPassword, TipusUsuari, id_usuari],
-                (err, result) => {
-                    if (err) {
-                        console.error("Error en l'actualització de l'usuari:", err);
-                        return res.status(500).json({ error: 'Error del servidor' });
-                    } else {
-                        res.status(200).json({ message: 'Usuario actualizado con éxito' });
-                    }
-                });
+            if(!Contrasenya){
+                db.query('UPDATE usuaris SET Email = ?, Nom = ?, Cognoms = ?, TipusUsuari = ? WHERE id_usuari = ?',
+                    [Email, Nom, Cognoms, TipusUsuari, id_usuari],
+                    (err, result) => {
+                        if (err) {
+                            console.error("Error en l'actualització de l'usuari:", err);
+                            return res.status(500).json({error: 'Error del servidor'});
+                        } else {
+                            res.status(200).json({message: 'Usuario actualizado con éxito'});
+                        }
+                    });
+            } else {
+                const hashedPassword = await bcrypt.hash(Contrasenya, 10);
+
+                // Actualitzar les dades de l'usuari a la base de dades
+                db.query('UPDATE usuaris SET Email = ?, Nom = ?, Cognoms = ?, Contrasenya = ?, TipusUsuari = ? WHERE id_usuari = ?',
+                    [Email, Nom, Cognoms, hashedPassword, TipusUsuari, id_usuari],
+                    (err, result) => {
+                        if (err) {
+                            console.error("Error en l'actualització de l'usuari:", err);
+                            return res.status(500).json({error: 'Error del servidor'});
+                        } else {
+                            res.status(200).json({message: 'Usuario actualizado con éxito'});
+                        }
+                    });
+            }
         } catch (error) {
             console.log("Error al hashear la contraseña:", error);
             return res.status(500).json({ error: 'Error al hashear la contraseña' });
