@@ -3,7 +3,12 @@ const express = require("express");
 const calculaHipoteca = express();
 calculaHipoteca.use(express.json());
 
-// Endpoint per simular hipoteques
+/**
+ * Endpoint per simular hipoteques
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
 calculaHipoteca.post('/simulador/hipoteca', (req, res) => {
     try {
         const { preu_vivenda, prestec, temps_anys } = req.body;
