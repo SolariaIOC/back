@@ -1,7 +1,9 @@
-//Treballem amb 3 tipus d'usuari
-// anónim = (accesible per tothom)
-// Registrat = (R) nomes pot accedir a les seves dades
-// Administrador = (A) pot accedir a tots els usuaris i immobles
+/**
+ * Treballem amb 3 tipus d'usuari
+ * - Anònim: (accesible per tothom)
+ * - Registrat: (R) només pot accedir a les seves dades
+ * - Administrador: (A) pot accedir a tots els usuaris i immobles
+ */
 
 const express = require("express");
 const db = require('./database');
@@ -9,13 +11,16 @@ const { verificaToken, verificarTipusUsuari } = require('./auth');
 const { paginateResults } = require('./functions');
 const ERROR_SERVIDOR = "Error del servidor";
 const ERROR_NO_RESULTATS = "No se encontraron resultados";
-//const ERROR_ACCES_PROHIBIT = "Acceso prohibido";
 
 const immobles = express();
 immobles.use(express.json());
 
 
-// Endpoint per obtenir llistat immobles (accessible per tothom)
+/**
+ * Endpoint per obtenir llistat d'immobles (accessible per tothom)
+ * @route GET /immobles
+ * @middleware paginateResults
+ */
 immobles.get('/immobles', paginateResults, async (req, res) => {
     try {
         const { limit, offset, currentPage } = req.pagination;
@@ -58,7 +63,12 @@ immobles.get('/immobles', paginateResults, async (req, res) => {
     }
 });
 
-// Endpoint per obtenir llistat immobles segons el Codi_Postal (accessible per tothom)
+/**
+ * Endpoint per obtenir llistat d'immobles segons el Codi Postal (accessible per tothom)
+ * @route GET /immobles/codi_postal/:codiPostal
+ * @middleware paginateResults
+ * @param {string} codiPostal - Codi Postal de la població
+ */
 immobles.get('/immobles/codi_postal/:codiPostal', paginateResults, async (req, res) => {
     try {
         const codiPostal = req.params.codiPostal;
@@ -102,7 +112,12 @@ immobles.get('/immobles/codi_postal/:codiPostal', paginateResults, async (req, r
     }
 });
 
-// Endpoint per obtenir llistat immobles segons la Poblacio (accessible per tothom)
+/**
+ * Endpoint per obtenir llistat d'immobles segons la Població (accessible per tothom)
+ * @route GET /immobles/poblacio/:poblacio
+ * @middleware paginateResults
+ * @param {string} poblacio - Nom de la població
+ */
 immobles.get('/immobles/poblacio/:poblacio', paginateResults, async (req, res) => {
     try {
         const poblacio = req.params.poblacio;
@@ -145,7 +160,11 @@ immobles.get('/immobles/poblacio/:poblacio', paginateResults, async (req, res) =
     }
 });
 
-// Endpoint per obtenir la llista d'immobles segons l'ID de l'usuari del token  (R)
+/**
+ * Endpoint per obtenir la llista d'immobles segons l'ID de l'usuari del token (R)
+ * @route GET /immobles/r
+ * @middleware verificaToken, verificarTipusUsuari('R')
+ */
 immobles.get('/immobles/r', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
     try {
         const idUsuariToken = req.usuario.id_usuari;
@@ -167,7 +186,11 @@ immobles.get('/immobles/r', verificaToken, verificarTipusUsuari('R'), async (req
 });
 
 
-// Endpoint per afegir un nou immoble (R)
+/**
+ * Endpoint per afegir un nou immoble (R)
+ * @route POST /immobles/r/afegir
+ * @middleware verificaToken, verificarTipusUsuari('R')
+ */
 immobles.post('/immobles/r/afegir', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
 
     try {
@@ -197,7 +220,12 @@ immobles.post('/immobles/r/afegir', verificaToken, verificarTipusUsuari('R'), as
     }
 });
 
-// Endpoint per eliminar un immoble per la seva id_immoble (R)
+/**
+ * Endpoint per eliminar un immoble per la seva id_immoble (R)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
 immobles.delete('/immobles/r/eliminar/:id_immoble', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
 
     // Recollim el id_usuari del token i la id_immoble de la URL
@@ -249,7 +277,12 @@ immobles.delete('/immobles/r/eliminar/:id_immoble', verificaToken, verificarTipu
     }
 });
 
-// Endpoint per actualitzar un immoble (R)
+/**
+ * Endpoint per actualitzar un immoble (R)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
 immobles.put('/immobles/r/actualitzar/:id_immoble', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
     try {
         const id_immoble = parseInt(req.params.id_immoble);
@@ -295,7 +328,12 @@ immobles.put('/immobles/r/actualitzar/:id_immoble', verificaToken, verificarTipu
 });
 
 
-// Endpoint per a la llista d'immobles per Email usuari (A)
+/**
+ * Endpoint per a la llista d'immobles per Email usuari (A)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
 immobles.get('/immobles/a/llistaImmobles/:Email', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
     const Email = req.params.Email;
 
@@ -320,11 +358,12 @@ immobles.get('/immobles/a/llistaImmobles/:Email', verificaToken, verificarTipusU
     });
 });
 
-// Endpoint per afegir un usuari (A)
-// Vinculat directament a usuaris/app/registre desde auth.js
-
-
-// Endpoint per afegir un immoble a un usuari (A)// Endpoint per afegir un immoble a un usuari (A)
+/**
+ * Endpoint per afegir un immoble a un usuari (A)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
 immobles.post('/immobles/a/afegirUsuariImmoble', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
 
     try {
@@ -352,7 +391,12 @@ immobles.post('/immobles/a/afegirUsuariImmoble', verificaToken, verificarTipusUs
 });
 
 
-// Endpoint per eliminar un immoble (A)
+/**
+ * Endpoint per eliminar un immoble (A)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
 immobles.delete('/immobles/a/eliminarImmoble/:id_immoble/:id_usuari', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
 
     // Recollir els IDs de l'immoble i de l'usuari de la URL
@@ -393,7 +437,12 @@ immobles.delete('/immobles/a/eliminarImmoble/:id_immoble/:id_usuari', verificaTo
 
 });
 
-// Endpoint per actualitzar un immoble de qualsevol usuari registrat (A)
+/**
+ * Endpoint per actualitzar un immoble de qualsevol usuari registrat (A)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
 immobles.put('/immobles/a/actualitzar/:id_immoble', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
     try {
         const id_immoble = parseInt(req.params.id_immoble);
