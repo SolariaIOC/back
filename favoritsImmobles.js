@@ -1,7 +1,7 @@
 const express = require("express");
 const db = require('./database');
 const { verificaToken, verificarTipusUsuari } = require('./auth');
-const { verificaExisteixImmoble } = require('./functions');
+const { verificaExisteixImmoble, crearObjectesMock } = require('./functions');
 const ERROR_SERVIDOR = "Error del servidor";
 const ERROR_NO_RESULTATS = "No se encontraron resultados";
 
