@@ -6,6 +6,7 @@
 const express = require("express");
 const db = require('./database');
 const { verificaToken, verificarTipusUsuari } = require('./auth');
+const { paginateResults } = require('./functions');
 const ERROR_SERVIDOR = "Error del servidor";
 const ERROR_NO_RESULTATS = "No se encontraron resultados";
 //const ERROR_ACCES_PROHIBIT = "Acceso prohibido";
@@ -15,41 +16,85 @@ immobles.use(express.json());
 
 
 // Endpoint per obtenir llistat immobles (accessible per tothom)
-immobles.get('/immobles', async (req, res) => {
+immobles.get('/immobles', paginateResults, async (req, res) => {
     try {
-        db.query('SELECT * FROM immobles', (error, results) => {
+        const { limit, offset, currentPage } = req.pagination;
+
+        db.query('SELECT COUNT(*) as total FROM immobles', (error, countResult) => {
             if (error) {
                 console.log("Error:", error);
                 return res.status(500).json(ERROR_SERVIDOR);
             }
-            if (!results || results.length === 0) {
-                return res.status(404).json({ error: ERROR_NO_RESULTATS });
-            }
 
-            res.send(results);
+            const totalResults = countResult[0].total;
+            const totalPages = Math.ceil(totalResults / limit);
+            const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+            const prevPage = currentPage > 1 ? currentPage - 1 : null;
 
+            db.query('SELECT * FROM immobles LIMIT ? OFFSET ?', [limit, offset], (error, results) => {
+                if (error) {
+                    console.log("Error:", error);
+                    return res.status(500).json(ERROR_SERVIDOR);
+                }
+                if (!results || results.length === 0) {
+                    return res.status(404).json({ error: ERROR_NO_RESULTATS });
+                }
+
+                res.json({
+                    results,
+                    pagination: {
+                        totalResults,
+                        totalPages,
+                        currentPage,
+                        nextPage,
+                        prevPage
+                    }
+                });
+            });
         });
     } catch (err) {
-        console.log("Error en el bloc catch:", err);
+        console.log("Error en el bloque catch:", err);
         res.status(500).json(ERROR_SERVIDOR);
     }
 });
 
 // Endpoint per obtenir llistat immobles segons el Codi_Postal (accessible per tothom)
-immobles.get('/immobles/codi_postal/:codiPostal', async (req, res) => {
+immobles.get('/immobles/codi_postal/:codiPostal', paginateResults, async (req, res) => {
     try {
         const codiPostal = req.params.codiPostal;
-        db.query('SELECT * FROM immobles WHERE Codi_Postal = ?', [codiPostal], (err, results) => {
-            if (err) {
-                console.error("Error:", err);
+        const { limit, offset, currentPage } = req.pagination;
+
+        db.query('SELECT COUNT(*) as total FROM immobles WHERE Codi_Postal = ?', [codiPostal], (error, countResult) => {
+            if (error) {
+                console.log("Error:", error);
                 return res.status(500).json(ERROR_SERVIDOR);
             }
-            if (!results || results.length === 0) {
-                return res.status(404).json({ error: ERROR_NO_RESULTATS });
-            }
 
-            res.send(results);
+            const totalResults = countResult[0].total;
+            const totalPages = Math.ceil(totalResults / limit);
+            const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+            const prevPage = currentPage > 1 ? currentPage - 1 : null;
 
+            db.query('SELECT * FROM immobles WHERE Codi_Postal = ? LIMIT ? OFFSET ?', [codiPostal, limit, offset], (err, results) => {
+                if (err) {
+                    console.error("Error:", err);
+                    return res.status(500).json(ERROR_SERVIDOR);
+                }
+                if (!results || results.length === 0) {
+                    return res.status(404).json({ error: ERROR_NO_RESULTATS });
+                }
+
+                res.json({
+                    results,
+                    pagination: {
+                        totalResults,
+                        totalPages,
+                        currentPage,
+                        nextPage,
+                        prevPage
+                    }
+                });
+            });
         });
     } catch (err) {
         console.error("Error en el bloc catch:", err);
@@ -58,20 +103,41 @@ immobles.get('/immobles/codi_postal/:codiPostal', async (req, res) => {
 });
 
 // Endpoint per obtenir llistat immobles segons la Poblacio (accessible per tothom)
-immobles.get('/immobles/poblacio/:poblacio', async (req, res) => {
+immobles.get('/immobles/poblacio/:poblacio', paginateResults, async (req, res) => {
     try {
         const poblacio = req.params.poblacio;
-        db.query('SELECT * FROM immobles WHERE Poblacio = ?', [poblacio], (err, results) => {
-            if (err) {
-                console.error("Error:", err);
+        const { limit, offset, currentPage } = req.pagination;
+
+        db.query('SELECT COUNT(*) as total FROM immobles WHERE Poblacio = ?', [poblacio], (error, countResult) => {
+            if (error) {
+                console.log("Error:", error);
                 return res.status(500).json(ERROR_SERVIDOR);
             }
-            if (!results || results.length === 0) {
-                return res.status(404).json({ error: ERROR_NO_RESULTATS });
-            }
 
-            res.send(results);
+            const totalResults = countResult[0].total;
+            const totalPages = Math.ceil(totalResults / limit);
+            const nextPage = currentPage < totalPages ? currentPage + 1 : null;
+            const prevPage = currentPage > 1 ? currentPage - 1 : null;
 
+            db.query('SELECT * FROM immobles WHERE Poblacio = ? LIMIT ? OFFSET ?', [poblacio, limit, offset], (err, results) => {
+                if (err) {
+                    console.error("Error:", err);
+                    return res.status(500).json(ERROR_SERVIDOR);
+                }
+                if (!results || results.length === 0) {
+                    return res.status(404).json({ error: ERROR_NO_RESULTATS });
+                }
+                res.json({
+                    results,
+                    pagination: {
+                        totalResults,
+                        totalPages,
+                        currentPage,
+                        nextPage,
+                        prevPage
+                    }
+                });
+            });
         });
     } catch (err) {
         console.error("Error en el bloc catch:", err);
@@ -122,7 +188,7 @@ immobles.post('/immobles/r/afegir', verificaToken, verificarTipusUsuari('R'), as
             }
         });
     } catch (error) {
-         if (error.status && error.status === 403) {
+        if (error.status && error.status === 403) {
             return res.status(403).json({ error: ERROR_ACCES_PROHIBIT });
         } else {
             console.error("Error en el bloc catch:", error);
@@ -133,7 +199,7 @@ immobles.post('/immobles/r/afegir', verificaToken, verificarTipusUsuari('R'), as
 
 // Endpoint per eliminar un immoble per la seva id_immoble (R)
 immobles.delete('/immobles/r/eliminar/:id_immoble', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
-    
+
     // Recollim el id_usuari del token i la id_immoble de la URL
     const { id_usuari } = req.usuario;
     const id_immoble_param = parseInt(req.params.id_immoble);
@@ -230,7 +296,7 @@ immobles.put('/immobles/r/actualitzar/:id_immoble', verificaToken, verificarTipu
 
 
 // Endpoint per a la llista d'immobles per Email usuari (A)
-immobles.get('/immobles/a/llistaImmobles/:Email', verificaToken, verificarTipusUsuari('A'), async(req, res) => {
+immobles.get('/immobles/a/llistaImmobles/:Email', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
     const Email = req.params.Email;
 
     // Consulta per obtenir els immobles associats a l'usuari amb l'email proporcionat

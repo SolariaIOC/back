@@ -31,7 +31,8 @@ login.post('/login', async (req, res) => {
                 datosUsuario: {
                     nombre: usuario.Nom,
                     apellidos: usuario.Cognoms,
-                    email: usuario.Email
+                    email: usuario.Email,
+                    tipusUsuari: usuario.TipusUsuari
                 }
             });
     });
