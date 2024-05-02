@@ -1,3 +1,8 @@
+/**
+ * Petit simulador d'hipoteques 
+ * funciona amb dades bàsiques.
+ */
+
 const express = require("express");
 
 const calculaHipoteca = express();

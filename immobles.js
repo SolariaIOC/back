@@ -28,7 +28,7 @@ immobles.get('/immobles', paginateResults, async (req, res) => {
         db.query('SELECT COUNT(*) as total FROM immobles', (error, countResult) => {
             if (error) {
                 console.log("Error:", error);
-                return res.status(500).json(ERROR_SERVIDOR);
+                return res.status(500).json({ error: ERROR_SERVIDOR });
             }
 
             const totalResults = countResult[0].total;
@@ -39,7 +39,7 @@ immobles.get('/immobles', paginateResults, async (req, res) => {
             db.query('SELECT * FROM immobles LIMIT ? OFFSET ?', [limit, offset], (error, results) => {
                 if (error) {
                     console.log("Error:", error);
-                    return res.status(500).json(ERROR_SERVIDOR);
+                    return res.status(500).json({ error: ERROR_SERVIDOR });
                 }
                 if (!results || results.length === 0) {
                     return res.status(404).json({ error: ERROR_NO_RESULTATS });
@@ -59,7 +59,7 @@ immobles.get('/immobles', paginateResults, async (req, res) => {
         });
     } catch (err) {
         console.log("Error en el bloque catch:", err);
-        res.status(500).json(ERROR_SERVIDOR);
+        return res.status(500).json({ error: ERROR_SERVIDOR });
     }
 });
 
@@ -77,7 +77,7 @@ immobles.get('/immobles/codi_postal/:codiPostal', paginateResults, async (req, r
         db.query('SELECT COUNT(*) as total FROM immobles WHERE Codi_Postal = ?', [codiPostal], (error, countResult) => {
             if (error) {
                 console.log("Error:", error);
-                return res.status(500).json(ERROR_SERVIDOR);
+                return res.status(500).json({ error: ERROR_SERVIDOR });
             }
 
             const totalResults = countResult[0].total;
@@ -88,7 +88,7 @@ immobles.get('/immobles/codi_postal/:codiPostal', paginateResults, async (req, r
             db.query('SELECT * FROM immobles WHERE Codi_Postal = ? LIMIT ? OFFSET ?', [codiPostal, limit, offset], (err, results) => {
                 if (err) {
                     console.error("Error:", err);
-                    return res.status(500).json(ERROR_SERVIDOR);
+                    return res.status(500).json({ error: ERROR_SERVIDOR });
                 }
                 if (!results || results.length === 0) {
                     return res.status(404).json({ error: ERROR_NO_RESULTATS });
@@ -126,7 +126,7 @@ immobles.get('/immobles/poblacio/:poblacio', paginateResults, async (req, res) =
         db.query('SELECT COUNT(*) as total FROM immobles WHERE Poblacio = ?', [poblacio], (error, countResult) => {
             if (error) {
                 console.log("Error:", error);
-                return res.status(500).json(ERROR_SERVIDOR);
+                return res.status(500).json({ error: ERROR_SERVIDOR });
             }
 
             const totalResults = countResult[0].total;
@@ -137,7 +137,7 @@ immobles.get('/immobles/poblacio/:poblacio', paginateResults, async (req, res) =
             db.query('SELECT * FROM immobles WHERE Poblacio = ? LIMIT ? OFFSET ?', [poblacio, limit, offset], (err, results) => {
                 if (err) {
                     console.error("Error:", err);
-                    return res.status(500).json(ERROR_SERVIDOR);
+                    return res.status(500).json({ error: ERROR_SERVIDOR });
                 }
                 if (!results || results.length === 0) {
                     return res.status(404).json({ error: ERROR_NO_RESULTATS });
