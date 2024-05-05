@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: immobles.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: immobles.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/**
+ * Treballem amb 3 tipus d'usuari
+ * - Anònim: (accesible per tothom)
+ * - Registrat: (R) només pot accedir a les seves dades
+ * - Administrador: (A) pot accedir a tots els usuaris i immobles
+ */
+
+const express = require("express");
+const db = require('./database');
+const { verificaToken, verificarTipusUsuari } = require('./auth');
+const { paginateResults } = require('./functions');
+const ERROR_SERVIDOR = "Error del servidor";
+const ERROR_NO_RESULTATS = "No se encontraron resultados";
+
+const immobles = express();
+immobles.use(express.json());
+
+
+/**
+ * Endpoint per obtenir llistat d'immobles (accessible per tothom)
+ * @route GET /immobles
+ * @middleware paginateResults
+ */
+immobles.get('/immobles', paginateResults, async (req, res) => {
+    try {
+        const { limit, offset, currentPage } = req.pagination;
+
+        db.query('SELECT COUNT(*) as total FROM immobles', (error, countResult) => {
+            if (error) {
+                console.log("Error:", error);
+                return res.status(500).json({ error: ERROR_SERVIDOR });
+            }
+
+            const totalResults = countResult[0].total;
+            const totalPages = Math.ceil(totalResults / limit);
+            const nextPage = currentPage &lt; totalPages ? currentPage + 1 : null;
+            const prevPage = currentPage > 1 ? currentPage - 1 : null;
+
+            db.query('SELECT * FROM immobles LIMIT ? OFFSET ?', [limit, offset], (error, results) => {
+                if (error) {
+                    console.log("Error:", error);
+                    return res.status(500).json({ error: ERROR_SERVIDOR });
+                }
+                if (!results || results.length === 0) {
+                    return res.status(404).json({ error: ERROR_NO_RESULTATS });
+                }
+
+                res.json({
+                    results,
+                    pagination: {
+                        totalResults,
+                        totalPages,
+                        currentPage,
+                        nextPage,
+                        prevPage
+                    }
+                });
+            });
+        });
+    } catch (err) {
+        console.log("Error en el bloque catch:", err);
+        return res.status(500).json({ error: ERROR_SERVIDOR });
+    }
+});
+
+/**
+ * Endpoint per obtenir llistat d'immobles segons el Codi Postal (accessible per tothom)
+ * @route GET /immobles/codi_postal/:codiPostal
+ * @middleware paginateResults
+ * @param {string} codiPostal - Codi Postal de la població
+ */
+immobles.get('/immobles/codi_postal/:codiPostal', paginateResults, async (req, res) => {
+    try {
+        const codiPostal = req.params.codiPostal;
+        const { limit, offset, currentPage } = req.pagination;
+
+        db.query('SELECT COUNT(*) as total FROM immobles WHERE Codi_Postal = ?', [codiPostal], (error, countResult) => {
+            if (error) {
+                console.log("Error:", error);
+                return res.status(500).json({ error: ERROR_SERVIDOR });
+            }
+
+            const totalResults = countResult[0].total;
+            const totalPages = Math.ceil(totalResults / limit);
+            const nextPage = currentPage &lt; totalPages ? currentPage + 1 : null;
+            const prevPage = currentPage > 1 ? currentPage - 1 : null;
+
+            db.query('SELECT * FROM immobles WHERE Codi_Postal = ? LIMIT ? OFFSET ?', [codiPostal, limit, offset], (err, results) => {
+                if (err) {
+                    console.error("Error:", err);
+                    return res.status(500).json({ error: ERROR_SERVIDOR });
+                }
+                if (!results || results.length === 0) {
+                    return res.status(404).json({ error: ERROR_NO_RESULTATS });
+                }
+
+                res.json({
+                    results,
+                    pagination: {
+                        totalResults,
+                        totalPages,
+                        currentPage,
+                        nextPage,
+                        prevPage
+                    }
+                });
+            });
+        });
+    } catch (err) {
+        console.error("Error en el bloc catch:", err);
+        res.status(500).json(ERROR_SERVIDOR);
+    }
+});
+
+/**
+ * Endpoint per obtenir llistat d'immobles segons la Població (accessible per tothom)
+ * @route GET /immobles/poblacio/:poblacio
+ * @middleware paginateResults
+ * @param {string} poblacio - Nom de la població
+ */
+immobles.get('/immobles/poblacio/:poblacio', paginateResults, async (req, res) => {
+    try {
+        const poblacio = req.params.poblacio;
+        const { limit, offset, currentPage } = req.pagination;
+
+        db.query('SELECT COUNT(*) as total FROM immobles WHERE Poblacio = ?', [poblacio], (error, countResult) => {
+            if (error) {
+                console.log("Error:", error);
+                return res.status(500).json({ error: ERROR_SERVIDOR });
+            }
+
+            const totalResults = countResult[0].total;
+            const totalPages = Math.ceil(totalResults / limit);
+            const nextPage = currentPage &lt; totalPages ? currentPage + 1 : null;
+            const prevPage = currentPage > 1 ? currentPage - 1 : null;
+
+            db.query('SELECT * FROM immobles WHERE Poblacio = ? LIMIT ? OFFSET ?', [poblacio, limit, offset], (err, results) => {
+                if (err) {
+                    console.error("Error:", err);
+                    return res.status(500).json({ error: ERROR_SERVIDOR });
+                }
+                if (!results || results.length === 0) {
+                    return res.status(404).json({ error: ERROR_NO_RESULTATS });
+                }
+                res.json({
+                    results,
+                    pagination: {
+                        totalResults,
+                        totalPages,
+                        currentPage,
+                        nextPage,
+                        prevPage
+                    }
+                });
+            });
+        });
+    } catch (err) {
+        console.error("Error en el bloc catch:", err);
+        res.status(500).json(ERROR_SERVIDOR);
+    }
+});
+
+/**
+ * Endpoint per obtenir la llista d'immobles segons l'ID de l'usuari del token (R)
+ * @route GET /immobles/r
+ * @middleware verificaToken, verificarTipusUsuari('R')
+ */
+immobles.get('/immobles/r', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
+    try {
+        const idUsuariToken = req.usuario.id_usuari;
+
+        db.query('SELECT * FROM immobles WHERE id_usuari = ?', [idUsuariToken], (error, results) => {
+            if (error) {
+                console.error("Error:", error);
+                return res.status(500).json({ error: ERROR_SERVIDOR });
+            }
+            if (!results || results.length === 0) {
+                return res.status(404).json({ error: ERROR_NO_RESULTATS });
+            }
+            res.status(200).json(results);
+        });
+    } catch (error) {
+        console.error("Error en el bloc catch:", error);
+        res.status(500).json(ERROR_SERVIDOR);
+    }
+});
+
+
+/**
+ * Endpoint per afegir un nou immoble (R)
+ * @route POST /immobles/r/afegir
+ * @middleware verificaToken, verificarTipusUsuari('R')
+ */
+immobles.post('/immobles/r/afegir', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
+
+    try {
+        let { Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+        const id_usuari = req.usuario.id_usuari;
+
+        // Comprovació de dades vàlides
+        if (!Carrer || !Numero || !Codi_Postal || !Poblacio || !Preu) {
+            return res.status(400).json({ error: 'Faltan datos' });
+        }
+
+        db.query('INSERT INTO immobles (id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge], (err, result) => {
+            if (err) {
+                console.error("Error:", err);
+                return res.status(500).json({ error: ERROR_SERVIDOR });
+            } else {
+                res.status(201).json({ message: 'Nuevo inmueble añadido con éxito' });
+            }
+        });
+    } catch (error) {
+        if (error.status &amp;&amp; error.status === 403) {
+            return res.status(403).json({ error: ERROR_ACCES_PROHIBIT });
+        } else {
+            console.error("Error en el bloc catch:", error);
+            res.status(500).json({ error: ERROR_SERVIDOR });
+        }
+    }
+});
+
+/**
+ * Endpoint per eliminar un immoble per la seva id_immoble (R)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
+immobles.delete('/immobles/r/eliminar/:id_immoble', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
+
+    // Recollim el id_usuari del token i la id_immoble de la URL
+    const { id_usuari } = req.usuario;
+    const id_immoble_param = parseInt(req.params.id_immoble);
+
+    // Verifiquem si la id_immoble és un número vàlid
+    if (isNaN(id_immoble_param) || id_immoble_param &lt;= 0) {
+        return res.status(400).json({ error: 'La ID del inmueble no és válida' });
+    }
+
+    try {
+        // Comprovem si l'immoble pertany a l'usuari autenticat
+        const immoble = await new Promise((resolve, reject) => {
+            db.query('SELECT * FROM immobles WHERE id_immoble = ? AND id_usuari = ?', [id_immoble_param, id_usuari], (err, result) => {
+                if (err) {
+                    console.error("Error en la consulta SELECT:", err);
+                    reject({ status: 500, message: ERROR_SERVIDOR });
+                } else if (!result || result.length === 0) {
+                    reject({ status: 404, message: ERROR_NO_RESULTATS });
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+
+        // Eliminem l'immoble de la base de dades
+        await new Promise((resolve, reject) => {
+            db.query('DELETE FROM immobles WHERE id_immoble = ?', [id_immoble_param], (err) => {
+                if (err) {
+                    console.error("Error en la consulta DELETE:", err);
+                    reject({ status: 500, message: ERROR_SERVIDOR });
+                } else {
+                    resolve();
+                }
+            });
+        });
+
+        res.status(200).json({ message: 'Inmueble eliminado con éxito' });
+    } catch (error) {
+        // Verificar si l'error és relacionat amb l'autorització
+        if (error.status &amp;&amp; error.status === 403) {
+            return res.status(403).json({ error: ERROR_ACCES_PROHIBIT });
+        } else {
+            // Si no és un error de 403, manejar-lo com un error del servidor
+            console.error("Error en el bloque catch:", error);
+            res.status(error.status || 500).json({ error: error.message });
+        }
+    }
+});
+
+/**
+ * Endpoint per actualitzar un immoble (R)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
+immobles.put('/immobles/r/actualitzar/:id_immoble', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
+    try {
+        const id_immoble = parseInt(req.params.id_immoble);
+        const id_usuari = req.usuario.id_usuari;
+        const { Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+
+        if (isNaN(id_immoble) || id_immoble &lt;= 0) {
+            return res.status(400).json({ error: 'La ID del inmueble no es válida' });
+        }
+        if (!Carrer || !Numero || !Codi_Postal || !Poblacio || !Preu) {
+            return res.status(400).json({ error: 'Faltan datos' });
+        }
+
+        // Verificar si l'immoble pertany a l'usuari autenticat
+        const inmueble = await new Promise((resolve, reject) => {
+            db.query('SELECT * FROM immobles WHERE id_immoble = ? AND id_usuari = ?', [id_immoble, id_usuari], (err, result) => {
+                if (err) {
+                    console.error("Error en la consulta SELECT:", err);
+                    reject({ status: 500, message: ERROR_SERVIDOR });
+                } else if (!result || result.length === 0) {
+                    reject({ status: 404, message: ERROR_NO_RESULTATS });
+                } else {
+                    resolve(result[0]); // hem de rebre un resultat
+                }
+            });
+        });
+
+        // Actualitzar les dades rebudes a la bbdd
+        db.query('UPDATE immobles SET Carrer = ?, Numero = ?, Pis = ?, Codi_Postal = ?, Poblacio = ?, Descripcio = ?, Preu = ?, Imatge = ? WHERE id_immoble = ?',
+            [Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge, id_immoble],
+            (err, result) => {
+                if (err) {
+                    console.error("Error en la actualización del inmueble:", err);
+                    return res.status(500).json({ error: ERROR_SERVIDOR });
+                } else {
+                    res.status(200).json({ message: 'Inmueble actualizado con éxito' });
+                }
+            });
+    } catch (error) {
+        console.error("Error en el bloque catch:", error);
+        res.status(error.status || 500).json({ error: error.message });
+    }
+});
+
+
+/**
+ * Endpoint per a la llista d'immobles per Email usuari (A)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
+immobles.get('/immobles/a/llistaImmobles/:Email', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
+    const Email = req.params.Email;
+
+    // Consulta per obtenir els immobles associats a l'usuari amb l'email proporcionat
+    const query = `
+        SELECT i.*
+        FROM immobles i
+        INNER JOIN usuaris u ON i.id_usuari = u.id_usuari
+        WHERE u.Email = ?
+    `;
+
+    db.query(query, [Email], (error, results) => {
+        if (error) {
+            console.error("Error:", error);
+            return res.status(500).json({ error: ERROR_SERVIDOR });
+        }
+        if (!results || results.length === 0) {
+            return res.status(404).json({ error: ERROR_NO_RESULTATS });
+        }
+
+        res.json(results);
+    });
+});
+
+/**
+ * Endpoint per afegir un immoble a un usuari (A)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
+immobles.post('/immobles/a/afegirUsuariImmoble', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
+
+    try {
+        // Recollir totes les dades de l'immoble del cos de la sol·licitud
+        let { id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+
+        // Comprovació de dades vàlides
+        if (!id_usuari || !Carrer || !Numero || !Codi_Postal || !Poblacio || !Preu) {
+            return res.status(400).json({ error: 'Faltan datos' });
+        }
+
+        // Consulta SQL per afegir un nou immoble a la bbdd amb l'id de l'usuari rebut en el cos de la sol·licitud
+        db.query('INSERT INTO immobles (id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)', [id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge], (err, result) => {
+            if (err) {
+                console.error("Error en la inserció d'immoble:", err);
+                return res.status(500).json({ error: ERROR_SERVIDOR });
+            } else {
+                res.status(201).json({ message: 'Nuevo inmueble añadido con éxito' });
+            }
+        });
+    } catch (err) {
+        console.error("Error en el bloc catch:", err);
+        res.status(500).json({ error: ERROR_SERVIDOR });
+    }
+});
+
+
+/**
+ * Endpoint per eliminar un immoble (A)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
+immobles.delete('/immobles/a/eliminarImmoble/:id_immoble/:id_usuari', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
+
+    // Recollir els IDs de l'immoble i de l'usuari de la URL
+    const id_immoble = parseInt(req.params.id_immoble);
+    const id_usuari = parseInt(req.params.id_usuari);
+
+    try {
+        // Comprovar si l'immoble pertany a l'usuari especificat
+        const immoble = await new Promise((resolve, reject) => {
+            db.query('SELECT * FROM immobles WHERE id_immoble = ? AND id_usuari = ?', [id_immoble, id_usuari], (err, result) => {
+                if (err) {
+                    console.error("Error en la consulta SELECT:", err);
+                    reject({ status: 500, message: ERROR_SERVIDOR });
+                } else if (!result || result.length === 0) {
+                    reject({ status: 404, message: ERROR_NO_RESULTATS });
+                } else {
+                    resolve(result[0]); // Només necessitem un resultat
+                }
+            });
+        });
+
+        // Eliminar l'immoble de la base de dades
+        await new Promise((resolve, reject) => {
+            db.query('DELETE FROM immobles WHERE id_immoble = ?', [id_immoble], (err) => {
+                if (err) {
+                    console.error("Error en la consulta DELETE:", err);
+                    reject({ status: 500, message: ERROR_SERVIDOR });
+                } else {
+                    resolve();
+                }
+            });
+        });
+
+        res.status(200).json({ message: 'Inmueble eliminado con éxito' });
+    } catch (error) {
+        res.status(error.status || 500).json({ error: error.message });
+    }
+
+});
+
+/**
+ * Endpoint per actualitzar un immoble de qualsevol usuari registrat (A)
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
+immobles.put('/immobles/a/actualitzar/:id_immoble', verificaToken, verificarTipusUsuari('A'), async (req, res) => {
+    try {
+        const id_immoble = parseInt(req.params.id_immoble);
+        const { id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge } = req.body;
+
+        if (isNaN(id_immoble) || id_immoble &lt;= 0) {
+            return res.status(400).json({ error: 'La ID del inmueble no es válida' });
+        }
+        if (!id_usuari || !Carrer || !Numero || !Codi_Postal || !Poblacio || !Preu) {
+            return res.status(400).json({ error: 'Faltan datos' });
+        }
+
+        // Actualitzar les dades de l'immoble a la bbdd
+        db.query('UPDATE immobles SET id_usuari = ?, Carrer = ?, Numero = ?, Pis = ?, Codi_Postal = ?, Poblacio = ?, Descripcio = ?, Preu = ?, Imatge = ? WHERE id_immoble = ?',
+            [id_usuari, Carrer, Numero, Pis, Codi_Postal, Poblacio, Descripcio, Preu, Imatge, id_immoble],
+            (err, result) => {
+                if (err) {
+                    console.error("Error en la actualización del inmueble:", err);
+                    return res.status(500).json({ error: ERROR_SERVIDOR });
+                } else {
+                    res.status(200).json({ message: 'Inmueble actualizado con éxito' });
+                }
+            });
+    } catch (error) {
+        console.error("Error en el bloque catch:", error);
+        res.status(error.status || 500).json({ error: error.message });
+    }
+});
+
+
+module.exports = immobles;
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#ERROR_ACCES_PROHIBIT">ERROR_ACCES_PROHIBIT</a></li><li><a href="global.html#app">app</a></li><li><a href="global.html#crearObjectesMock">crearObjectesMock</a></li><li><a href="global.html#db">db</a></li><li><a href="global.html#express">express</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#logout">logout</a></li><li><a href="global.html#paginateResults">paginateResults</a></li><li><a href="global.html#refrescarToken">refrescarToken</a></li><li><a href="global.html#verificaExisteixImmoble">verificaExisteixImmoble</a></li><li><a href="global.html#verificaToken">verificaToken</a></li><li><a href="global.html#verificarTipusUsuari">verificarTipusUsuari</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Sun May 05 2024 21:09:49 GMT+0200 (Central European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
