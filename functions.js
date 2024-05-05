@@ -43,7 +43,7 @@ function verificaExisteixImmoble(id_immoble, callback) {
  */
 function paginateResults(req, res, next) {
   const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
+  const limit = parseInt(req.query.limit) || 9;
   const offset = (page - 1) * limit;
 
   req.pagination = {

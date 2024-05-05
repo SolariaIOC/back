@@ -4,7 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1df9e3c6-4547-4a1d-9059-55e54af53cfe" name="Changes" comment="" />
+    <list default="true" id="1df9e3c6-4547-4a1d-9059-55e54af53cfe" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -73,7 +75,7 @@
       <workItem from="1713094394739" duration="1484000" />
       <workItem from="1714563373704" duration="15345000" />
       <workItem from="1714657415856" duration="486000" />
-      <workItem from="1714932385346" duration="338000" />
+      <workItem from="1714932385346" duration="893000" />
     </task>
     <servers />
   </component>
@@ -88,7 +90,7 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/usuaris.js</url>
-          <line>135</line>
+          <line>178</line>
           <option name="timeStamp" value="1" />
         </line-breakpoint>
       </breakpoints>
