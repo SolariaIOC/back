@@ -1,3 +1,9 @@
+/**
+ * Zona per tractar els immobles favorits on es poden
+ * llistar, afegir i eliminar de la llista.
+ */
+
+
 const express = require("express");
 const db = require('./database');
 const { verificaToken, verificarTipusUsuari } = require('./auth');
@@ -8,7 +14,12 @@ const ERROR_NO_RESULTATS = "No se encontraron resultados";
 const favoritsImmobles = express();
 favoritsImmobles.use(express.json());
 
-// Endpoint llistar immobles favorits d'un usuari
+/**
+ * Endpoint per llistar els immobles favorits d'un usuari
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
 favoritsImmobles.get('/favorits', verificaToken, verificarTipusUsuari('R'), (req, res) => {
     try {
         const id_usuari = req.usuario.id_usuari;
@@ -46,7 +57,12 @@ favoritsImmobles.get('/favorits', verificaToken, verificarTipusUsuari('R'), (req
     }
 });
 
-// Endpoint per afegir un immoble a la llista de favorits d'un usuari
+/**
+ * Endpoint per afegir un immoble a la llista de favorits d'un usuari
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
 favoritsImmobles.post('/afegirImmobleFavorit', verificaToken, verificarTipusUsuari('R'), async (req, res) => {
     try {
         const id_usuari = req.usuario.id_usuari;
@@ -84,7 +100,12 @@ favoritsImmobles.post('/afegirImmobleFavorit', verificaToken, verificarTipusUsua
     }
 });
 
-// Endpoint per eliminar un immoble de la llista de favorits d'un usuari
+/**
+ * Endpoint per eliminar un immoble de la llista de favorits d'un usuari
+ * @param {Request} req La petició HTTP
+ * @param {Response} res La resposta HTTP
+ * @returns {void}
+ */
 favoritsImmobles.delete('/eliminarImmobleFavorit', verificaToken, verificarTipusUsuari('R'), (req, res) => {
     try {
         const id_usuari = req.usuario.id_usuari;
